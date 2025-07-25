@@ -34,6 +34,18 @@
   - StationAiIconWeird
   - StationAiIconInverted
   # </Trauma>
+  # Arcane-Start
+  - StationAiIconThinking
+  - StationAiIconXenomorph
+  - StationAiIconBanned
+  - StationAiIconGento
+  - StationAiIconGondola
+  - StationAiIconArmy
+  - StationAiIconRedOctober
+  - StationAiIconStatic
+  - StationAiIconMeow
+  - StationAiIconText
+  # Arcane-End
 
 - type: stationAiCustomizationGroup
   id: StationAiHolograms
@@ -45,6 +57,12 @@
   - StationAiHologramFace
   - StationAiHologramCat
   - StationAiHologramDog
+  # Europa-Start
+  - StationAiHologramKobold
+  - StationAiHologramMonkey
+  - StationAiHologramHorror
+  - StationAiHologramXenomorphQueen
+  # Europa-End
 
 # Iconography
 - type: stationAiCustomization

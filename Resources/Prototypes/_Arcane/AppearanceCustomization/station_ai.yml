@@ -1,0 +1,157 @@
+# Iconography
+- type: stationAiCustomization
+  parent: StationAiIconBase
+  id: StationAiIconThinking
+  name: station-ai-icon-thinking
+  layerData:
+    Occupied:
+      sprite: _Arcane/Mobs/Silicon/station_ai.rsi
+      state: ai-_thinking_
+    Dead:
+      sprite: _Arcane/Mobs/Silicon/station_ai.rsi
+      state: ai-_thinking__dead
+
+- type: stationAiCustomization
+  parent: StationAiIconBase
+  id: StationAiIconXenomorph
+  name: station-ai-icon-xenomorph
+  layerData:
+    Occupied:
+      sprite: _Arcane/Mobs/Silicon/station_ai.rsi
+      state: ai-alien
+    Dead:
+      sprite: _Arcane/Mobs/Silicon/station_ai.rsi
+      state: ai-alien_dead
+
+- type: stationAiCustomization
+  parent: StationAiIconBase
+  id: StationAiIconBanned
+  name: station-ai-icon-banned
+  layerData:
+    Occupied:
+      sprite: _Arcane/Mobs/Silicon/station_ai.rsi
+      state: ai-banned
+    Dead:
+      sprite: Mobs/Silicon/station_ai.rsi
+      state: ai_dead
+
+- type: stationAiCustomization
+  parent: StationAiIconBase
+  id: StationAiIconGento
+  name: station-ai-icon-gento
+  layerData:
+    Occupied:
+      sprite: _Arcane/Mobs/Silicon/station_ai.rsi
+      state: ai-gentoo
+    Dead:
+      sprite: _Arcane/Mobs/Silicon/station_ai.rsi
+      state: ai-gentoo_dead
+
+- type: stationAiCustomization
+  parent: StationAiIconBase
+  id: StationAiIconGondola
+  name: station-ai-icon-gondola
+  layerData:
+    Occupied:
+      sprite: _Arcane/Mobs/Silicon/station_ai.rsi
+      state: ai-gondola
+    Dead:
+      sprite: Mobs/Silicon/station_ai.rsi
+      state: ai_dead
+
+- type: stationAiCustomization
+  parent: StationAiIconBase
+  id: StationAiIconArmy
+  name: station-ai-icon-army
+  layerData:
+    Occupied:
+      sprite: _Arcane/Mobs/Silicon/station_ai.rsi
+      state: ai-murica
+    Dead:
+      sprite: _Arcane/Mobs/Silicon/station_ai.rsi
+      state: ai-murica_dead
+
+- type: stationAiCustomization
+  parent: StationAiIconBase
+  id: StationAiIconRedOctober
+  name: station-ai-icon-redoctober
+  layerData:
+    Occupied:
+      sprite: _Arcane/Mobs/Silicon/station_ai.rsi
+      state: ai-redoctober
+    Dead:
+      sprite: _Arcane/Mobs/Silicon/station_ai.rsi
+      state: ai-redoctober_dead
+
+- type: stationAiCustomization
+  parent: StationAiIconBase
+  id: StationAiIconStatic
+  name: station-ai-icon-static
+  layerData:
+    Occupied:
+      sprite: _Arcane/Mobs/Silicon/station_ai.rsi
+      state: ai-static
+    Dead:
+      sprite: _Arcane/Mobs/Silicon/station_ai.rsi
+      state: ai-static_dead
+
+- type: stationAiCustomization
+  parent: StationAiIconBase
+  id: StationAiIconMeow
+  name: station-ai-icon-meow
+  layerData:
+    Occupied:
+      sprite: _Arcane/Mobs/Silicon/station_ai.rsi
+      state: ai-syndicatmeow
+    Dead:
+      sprite: Mobs/Silicon/station_ai.rsi
+      state: ai_dead
+
+- type: stationAiCustomization
+  parent: StationAiIconBase
+  id: StationAiIconText
+  name: station-ai-icon-text
+  layerData:
+    Occupied:
+      sprite: _Arcane/Mobs/Silicon/station_ai.rsi
+      state: ai-text
+    Dead:
+      sprite: Mobs/Silicon/station_ai.rsi
+      state: ai_dead
+
+# Holograms
+- type: stationAiCustomization
+  id: StationAiHologramHorror
+  name: station-ai-hologram-horror
+  previewKey: Hologram
+  layerData:
+    Hologram:
+      sprite: _Arcane/Mobs/Silicon/holograms.rsi
+      state: horror
+
+- type: stationAiCustomization
+  id: StationAiHologramXenomorphQueen
+  name: station-ai-hologram-xenomorph-queen
+  previewKey: Hologram
+  layerData:
+    Hologram:
+      sprite: _Arcane/Mobs/Silicon/holograms.rsi
+      state: xeno_queen
+
+- type: stationAiCustomization
+  id: StationAiHologramKobold
+  name: station-ai-hologram-kobold
+  previewKey: Hologram
+  layerData:
+    Hologram:
+      sprite: _Arcane/Mobs/Silicon/holograms.rsi
+      state: ai_kobold
+
+- type: stationAiCustomization
+  id: StationAiHologramMonkey
+  name: station-ai-hologram-monkey
+  previewKey: Hologram
+  layerData:
+    Hologram:
+      sprite: _Arcane/Mobs/Silicon/holograms.rsi
+      state: ai_monkey
