@@ -27,6 +27,7 @@ public sealed class DoAfterOverlay : Overlay
 
     private readonly Texture _barTexture;
     private readonly ShaderInstance _unshadedShader;
+    private SpriteSpecifier _cogTexture; // Arcane
 
     /// <summary>
     ///     Flash time for cancelled DoAfters
@@ -60,6 +61,7 @@ public sealed class DoAfterOverlay : Overlay
         _sprite = _entManager.System<SpriteSystem>();
         var sprite = new SpriteSpecifier.Rsi(new("/Textures/Interface/Misc/progress_bar.rsi"), "icon");
         _barTexture = _entManager.EntitySysManager.GetEntitySystem<SpriteSystem>().Frame0(sprite);
+        _cogTexture = new SpriteSpecifier.Rsi(new("/Textures/_Arcane/Interface/Misc/progress_cog.rsi"), "cog"); // Arcane
 
         _unshadedShader = protoManager.Index(UnshadedShader).Instance();
     }
@@ -150,31 +152,46 @@ public sealed class DoAfterOverlay : Overlay
                 var position = new Vector2(-_barTexture.Width / 2f / EyeManager.PixelsPerMeter,
                     yOffset / scale + offset / EyeManager.PixelsPerMeter * scale);
 
-                // Draw the underlying bar texture
-                handle.DrawTexture(_barTexture, position, Color.White.WithAlpha(alpha));
+                // Arcane-Start
+                var cogTexture = _sprite.GetFrame(_cogTexture, curTime);
+                var showProgressBar = uid == localEnt;
+                var cogPosition = showProgressBar
+                    ? new Vector2(position.X + _barTexture.Width / 2f / scale / EyeManager.PixelsPerMeter, position.Y)
+                    : position with { X = -cogTexture.Width / 2f / EyeManager.PixelsPerMeter };
 
-                Color color;
-                float elapsedRatio;
+                if (showProgressBar)
+                // Arcane-End
+                    // Draw the underlying bar texture
+                    handle.DrawTexture(_barTexture, position, Color.White.WithAlpha(alpha));
+                // Arcane-Start
+                handle.DrawTexture(cogTexture, cogPosition);
 
-                // if we're cancelled then flick red / off.
-                if (doAfter.CancelledTime != null)
+                if (showProgressBar)
                 {
-                    elapsed = doAfter.CancelledTime.Value - doAfter.StartTime;
-                    elapsedRatio = (float)Math.Min(1, elapsed.TotalSeconds / doAfter.Args.Delay.TotalSeconds);
-                    var cancelElapsed = (time - doAfter.CancelledTime.Value).TotalSeconds;
-                    var flash = Math.Floor(cancelElapsed / FlashTime) % 2 == 0;
-                    color = GetProgressColor(0, flash ? alpha : 0);
-                }
-                else
-                {
-                    elapsedRatio = (float)Math.Min(1, elapsed.TotalSeconds / doAfter.Args.Delay.TotalSeconds);
-                    color = GetProgressColor(elapsedRatio, alpha);
-                }
+                // Arcane-End
+                    Color color;
+                    float elapsedRatio;
 
-                var xProgress = (EndX - StartX) * elapsedRatio + StartX;
-                var box = new Box2(new Vector2(StartX, 3f) / EyeManager.PixelsPerMeter, new Vector2(xProgress, 4f) / EyeManager.PixelsPerMeter);
-                box = box.Translated(position);
-                handle.DrawRect(box, doAfter.Args.ColorOverride ?? color); // Goob edit
+                    // if we're cancelled then flick red / off.
+                    if (doAfter.CancelledTime != null)
+                    {
+                        elapsed = doAfter.CancelledTime.Value - doAfter.StartTime;
+                        elapsedRatio = (float)Math.Min(1, elapsed.TotalSeconds / doAfter.Args.Delay.TotalSeconds);
+                        var cancelElapsed = (time - doAfter.CancelledTime.Value).TotalSeconds;
+                        var flash = Math.Floor(cancelElapsed / FlashTime) % 2 == 0;
+                        color = GetProgressColor(0, flash ? alpha : 0);
+                    }
+                    else
+                    {
+                        elapsedRatio = (float)Math.Min(1, elapsed.TotalSeconds / doAfter.Args.Delay.TotalSeconds);
+                        color = GetProgressColor(elapsedRatio, alpha);
+                    }
+
+                    var xProgress = (EndX - StartX) * elapsedRatio + StartX;
+                    var box = new Box2(new Vector2(StartX, 3f) / EyeManager.PixelsPerMeter, new Vector2(xProgress, 4f) / EyeManager.PixelsPerMeter);
+                    box = box.Translated(position);
+                    handle.DrawRect(box, doAfter.Args.ColorOverride ?? color); // Goob edit
+                } // Arcane
                 offset += _barTexture.Height / scale;
             }
         }
@@ -183,7 +200,7 @@ public sealed class DoAfterOverlay : Overlay
         handle.SetTransform(Matrix3x2.Identity);
     }
 
-    public Color GetProgressColor(float progress, float alpha = 1f)
+    private Color GetProgressColor(float progress, float alpha = 1f) // Arcane-Edit: public > private
     {
         return _progressColor.GetProgressColor(progress).WithAlpha(alpha);
     }
