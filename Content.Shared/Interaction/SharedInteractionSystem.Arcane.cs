@@ -1,13 +1,31 @@
-using Content.Shared._Arcane.Interaction;
 using Content.Shared.Inventory.VirtualItem;
 using Robust.Shared.Network;
 using Robust.Shared.Player;
-
+// Arcane-Start
+using Content.Shared._Arcane.Interaction;
+using Content.Arcane.Common.CCVar;
+using Robust.Shared.Configuration;
+// Arcane-End
 namespace Content.Shared.Interaction;
 
 public abstract partial class SharedInteractionSystem
 {
     [Dependency] private INetManager _net = default!;
+
+    [Dependency] private IConfigurationManager _cfg = default!;
+
+    private bool _interactionParticlesSuppressed;
+    private bool _interactionParticlesEnabled = true;
+
+    private void InitializeInteractionParticles()
+    {
+        Subs.CVar(_cfg, ArcaneCVars.InteractionParticlesEnabled, v => _interactionParticlesEnabled = v, true);
+    }
+
+    public void SetInteractionParticlesSuppressed(bool suppressed)
+    {
+        _interactionParticlesSuppressed = suppressed;
+    }
 
     public void DoContactInteraction(EntityUid uidA,
         EntityUid? uidB,
@@ -19,7 +37,7 @@ public abstract partial class SharedInteractionSystem
     {
         DoContactInteraction(uidA, uidB, args);
 
-        if (!interactionParticles || uidB is not { } target || args?.Handled == false || uidA == target)
+        if (!interactionParticles || !_interactionParticlesEnabled || _interactionParticlesSuppressed || uidB is not { } target || args?.Handled == false || uidA == target)
             return;
 
         if (!TryComp(uidA, out MetaDataComponent? metaA) || metaA.EntityPaused
@@ -32,13 +50,9 @@ public abstract partial class SharedInteractionSystem
 
         if (_net.IsServer)
         {
-            var filter = predicted
-                ? Filter.PvsExcept(uidA, entityManager: EntityManager)
-                : Filter.Pvs(uidA, entityManager: EntityManager);
-
-            RaiseNetworkEvent(new StellarInteractionParticleEvent(GetNetEntity(uidA), GetNetEntity(used), GetNetEntity(target), false, interactionParticleType), filter);
+            RaiseNetworkEvent(new StellarInteractionParticleEvent(GetNetEntity(uidA), GetNetEntity(used), GetNetEntity(target), false, interactionParticleType), Filter.Pvs(uidA, entityManager: EntityManager));
         }
-        else if (_gameTiming.IsFirstTimePredicted)
+        else if (predicted && _gameTiming.IsFirstTimePredicted)
         {
             RaiseLocalEvent(new StellarInteractionParticleEvent(GetNetEntity(uidA), GetNetEntity(used), GetNetEntity(target), true, interactionParticleType));
         }

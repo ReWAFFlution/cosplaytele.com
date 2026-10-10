@@ -22,4 +22,10 @@ public sealed partial class ArcaneCVars
         CVarDef.Create("sprint.sprint_enabled", true, CVar.SERVER | CVar.REPLICATED);
 
     #endregion
+
+    public static readonly CVarDef<bool> InteractionParticlesEnabled =
+        CVarDef.Create("particles.interaction_enabled", true, CVar.SERVER | CVar.REPLICATED);
+
+    public static readonly CVarDef<float> InHandInteractionParticleScale =
+        CVarDef.Create("particles.inhand_interaction_scale", 1f, CVar.CLIENTONLY | CVar.ARCHIVE);
 }

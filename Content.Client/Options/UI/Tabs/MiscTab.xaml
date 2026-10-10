@@ -37,6 +37,7 @@
                        StyleClasses="LabelKeyText"/>
                 <CheckBox Name="AutoFocusSearchOnBuildMenuCheckBox" Text="{Loc 'ui-options-auto-focus-search-on-build-menu'}" />
                 <!-- Goobstation Edit End -->
+                <ui:OptionSlider Name="InHandInteractionParticleScaleSlider" Title="{Loc 'ui-options-inhand-interaction-particle-scale'}" /> <!-- Arcane -->
                 <!-- <CheckBox Name="ToggleWalk" Text="{Loc 'ui-options-hotkey-toggle-walk'}" /> -->
             </BoxContainer>
         </ScrollContainer>

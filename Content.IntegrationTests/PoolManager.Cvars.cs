@@ -4,6 +4,7 @@ using Content.Lavaland.Shared.CCVar;
 using Content.Trauma.Common.CCVar;
 // </Trauma>
 using Content.Shared.CCVar;
+using Content.Arcane.Common.CCVar; // Arcane
 
 namespace Content.IntegrationTests;
 
@@ -46,5 +47,6 @@ public static partial class PoolManager
         (CCVars.InteractionRateLimitPeriod.Name, "0.1"),
         (CCVars.MovementMobPushing.Name, "false"),
         (CCVars.ResourceUploadingStoreDeletionDays.Name, "0"),
+        (ArcaneCVars.InteractionParticlesEnabled.Name, "false"), // Arcane
     };
 }
