@@ -23,6 +23,7 @@ using Robust.Shared.Physics.Events;
 using Robust.Shared.Player;
 using Robust.Shared.Timing;
 using Content.Shared.Weapons.Ranged.Components;
+using Content.Shared._Arcane.Camera; // Arcane
 
 namespace Content.Trauma.Shared.Projectiles;
 
@@ -46,6 +47,10 @@ public sealed partial class PredictedProjectileSystem : EntitySystem
     [Dependency] private EntityQuery<ProjectileComponent> _query = default!;
     [Dependency] private EntityQuery<PhysicsComponent> _physicsQuery = default!;
     [Dependency] private EntityQuery<FixturesComponent> _fixturesQuery = default!;
+    // Arcane-Start
+    [Dependency] private ESScreenshakeSystem _shake = default!;
+    private static readonly ESScreenshakeParameters HitShake = new(0.45f, 1.1f, 0.04f);
+    // Arcane-End
 
     [SubscribeLocalEvent]
     private void OnStartCollide(Entity<ProjectileComponent> ent, ref StartCollideEvent args)
@@ -188,7 +193,11 @@ public sealed partial class PredictedProjectileSystem : EntitySystem
             _gun.PlayImpactSound(target, damage, comp.SoundHit, comp.ForceSound);
 
             if (!ourBody.LinearVelocity.IsLengthZero() && _timing.IsFirstTimePredicted)
-                _recoil.KickCamera(target, ourBody.LinearVelocity.Normalized());
+                // Arcane-Edit-Start
+                _recoil.KickCamera(target, ourBody.LinearVelocity.Normalized() * 0.08f);
+            if (_net.IsServer)
+                _shake.Screenshake(target, HitShake, null);
+            // Arcane-Edit-End
         }
 
         if (comp.DeleteOnCollide && comp.ProjectileSpent)

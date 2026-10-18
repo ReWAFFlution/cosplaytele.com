@@ -4,6 +4,7 @@ using Content.Trauma.Common.MartialArts;
 using Content.Shared.Weapons.Melee;
 // </Trauma>
 using Content.Shared.ActionBlocker;
+using Content.Shared._Arcane.Interaction; // Arcane
 using Content.Shared.Administration.Logs;
 using Content.Shared.Alert;
 using Content.Shared.Buckle.Components;
@@ -666,7 +667,7 @@ public sealed partial class PullingSystem : EntitySystem
 
         // Pulling confirmed
 
-        _interaction.DoContactInteraction(pullableUid, pullerUid);
+        _interaction.DoContactInteraction(pullerUid, pullableUid, null, true, interactionParticleType: StellarInteractionParticleType.Pull); // Arcane-Edit
 
         // Use net entity so it's consistent across client and server.
         pullableComp.PullJointId = $"pull-joint-{GetNetEntity(pullableUid)}";

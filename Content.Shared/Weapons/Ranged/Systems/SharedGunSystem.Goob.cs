@@ -7,6 +7,7 @@ using Content.Shared.Weapons.Hitscan.Components;
 using Content.Shared.Weapons.Ranged.Components;
 using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
+using Content.Shared._Arcane.Camera; // Arcane
 
 namespace Content.Shared.Weapons.Ranged.Systems;
 
@@ -16,8 +17,17 @@ namespace Content.Shared.Weapons.Ranged.Systems;
 public abstract partial class SharedGunSystem
 {
     [Dependency] private EntityLookupSystem _lookup = default!;
+    [Dependency] private ESScreenshakeSystem _shake = default!; // Arcane
 
     private HashSet<Entity<BodyComponent>> _bodies = new();
+
+    // Arcane-Start
+    private void GunScreenshake(EntityUid user, Entity<GunComponent> gun)
+    {
+        var rotation = new ESScreenshakeParameters(0.085f * gun.Comp.CameraRecoilScalarModified, 1.2f, 0.008f);
+        _shake.Screenshake(user, null, rotation);
+    }
+    // Arcane-End
 
     [SubscribeLocalEvent]
     private void OnBasicEntityDamageExamine(Entity<BasicEntityAmmoProviderComponent> ent, ref DamageExamineEvent args)

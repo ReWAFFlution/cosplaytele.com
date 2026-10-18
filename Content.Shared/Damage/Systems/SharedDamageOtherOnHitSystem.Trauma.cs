@@ -82,7 +82,11 @@ public abstract partial class SharedDamageOtherOnHitSystem
         if (TryComp<PhysicsComponent>(uid, out var body) && body.LinearVelocity.LengthSquared() > 0f)
         {
             var direction = body.LinearVelocity.Normalized();
-            _recoil.KickCamera(args.Target, direction);
+            // Arcane-Edit-Start
+            _recoil.KickCamera(args.Target, direction * 0.1f);
+            if (_net.IsServer)
+                _shake.Screenshake(args.Target, HitShake, null);
+            // Arcane-Edit-End
         }
     }
 }

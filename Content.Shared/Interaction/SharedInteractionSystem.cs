@@ -8,6 +8,7 @@ using Content.Trauma.Common.Interaction;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Content.Shared.ActionBlocker;
+using Content.Shared._Arcane.Interaction; // Arcane
 using Content.Shared.Administration.Logs;
 using Content.Shared.CCVar;
 using Content.Shared.Chat;
@@ -588,7 +589,7 @@ namespace Content.Shared.Interaction
             RaiseLocalEvent(user, userMessage, true);
 
             _adminLogger.Add(LogType.InteractHand, LogImpact.Low, $"{user} interacted with {target}");
-            DoContactInteraction(user, target, message);
+            DoContactInteraction(user, target, null, true, message, message.InteractionParticle); // Arcane-Edit
             if (message.Handled || userMessage.Handled)
                 return true; // Goob
 
@@ -634,7 +635,7 @@ namespace Content.Shared.Interaction
                 RaiseLocalEvent(target.Value, rangedMsg, true);
 
                 // We contact the USED entity, but not the target.
-                DoContactInteraction(user, used, rangedMsg);
+                DoContactInteraction(user, used, null, true, rangedMsg); // Arcane-Edit
                 if (rangedMsg.Handled)
                     return;
             }
@@ -1075,7 +1076,7 @@ namespace Content.Shared.Interaction
                 return false;
 
             // We contact the USED entity, but not the target.
-            DoContactInteraction(user, used, ev);
+            DoContactInteraction(user, used, null, true, ev); // Arcane-Edit
             return ev.Handled;
         }
 
@@ -1127,8 +1128,10 @@ namespace Content.Shared.Interaction
             var userInteractUsingEvent = new UserInteractUsingEvent(user, used, target, clickLocation);
             RaiseLocalEvent(user, userInteractUsingEvent, true);
 
-            DoContactInteraction(user, used, interactUsingEvent);
-            DoContactInteraction(user, target, interactUsingEvent);
+            // Arcane-Edit-Start
+            DoContactInteraction(user, used, null, true, interactUsingEvent, interactUsingEvent.InteractionParticle);
+            DoContactInteraction(user, target, used, true, interactUsingEvent, interactUsingEvent.InteractionParticle);
+            // Arcane-Edit-End
             // Contact interactions are currently only used for forensics, so we don't raise used -> target
             if (interactUsingEvent.Handled || userInteractUsingEvent.Handled)
                 return true;
@@ -1179,10 +1182,10 @@ namespace Content.Shared.Interaction
 
             var afterInteractEvent = new AfterInteractEvent(user, used, target, clickLocation, canReach);
             RaiseLocalEvent(used, afterInteractEvent);
-            DoContactInteraction(user, used, afterInteractEvent);
+            DoContactInteraction(user, used, null, true, afterInteractEvent, afterInteractEvent.SpawnInteractionParticles); // Arcane-Edit
             if (canReach)
             {
-                DoContactInteraction(user, target, afterInteractEvent);
+                DoContactInteraction(user, target, used, true, afterInteractEvent, afterInteractEvent.SpawnInteractionParticles); // Arcane-Edit
                 // Contact interactions are currently only used for forensics, so we don't raise used -> target
             }
 
@@ -1196,10 +1199,10 @@ namespace Content.Shared.Interaction
             var afterInteractUsingEvent = new AfterInteractUsingEvent(user, used, target, clickLocation, canReach);
             RaiseLocalEvent(target.Value, afterInteractUsingEvent);
 
-            DoContactInteraction(user, used, afterInteractUsingEvent);
+            DoContactInteraction(user, used, null, true, afterInteractUsingEvent, afterInteractUsingEvent.SpawnInteractionParticles); // Arcane-Edit
             if (canReach)
             {
-                DoContactInteraction(user, target, afterInteractUsingEvent);
+                DoContactInteraction(user, target, used, true, afterInteractUsingEvent, afterInteractUsingEvent.SpawnInteractionParticles); // Arcane-Edit
                 // Contact interactions are currently only used for forensics, so we don't raise used -> target
             }
 
@@ -1262,7 +1265,7 @@ namespace Content.Shared.Interaction
             RaiseLocalEvent(used, activateMsg, true);
             if (activateMsg.Handled)
             {
-                DoContactInteraction(user, used);
+                DoContactInteraction(user, used, null, true, interactionParticles: activateMsg.InteractionParticle); // Arcane-Edit
                 if (!activateMsg.WasLogged)
                     _adminLogger.Add(LogType.InteractActivate, LogImpact.Low, $"{ToPrettyString(user):user} activated {ToPrettyString(used):used}");
 
@@ -1277,7 +1280,7 @@ namespace Content.Shared.Interaction
             if (!userEv.Handled)
                 return false;
 
-            DoContactInteraction(user, used);
+            DoContactInteraction(user, used, null, true); // Arcane-Edit
             // Still need to call this even without checkUseDelay in case this gets relayed from Activate.
             if (delayComponent != null)
                 _useDelay.TryResetDelay((used, delayComponent));
@@ -1326,7 +1329,7 @@ namespace Content.Shared.Interaction
             RaiseLocalEvent(used, useMsg, true);
             if (useMsg.Handled)
             {
-                DoContactInteraction(user, used, useMsg);
+                DoContactInteraction(user, used, null, true, useMsg, interactionParticleType: StellarInteractionParticleType.InHand); // Arcane-Edit
                 if (delayComponent != null && useMsg.ApplyDelay)
                     _useDelay.TryResetDelay((used, delayComponent));
                 return true;

@@ -20,7 +20,7 @@ public sealed partial class AlternateUISystem : EntitySystem
         var user = args.User;
         args.Verbs.Add(new AlternativeVerb
         {
-            Act = () => _aui.InteractUI(user, ent, aui, ent.Comp.Key),
+            Act = () => { var interactionParticle = false; _aui.InteractUI(user, ent, aui, ref interactionParticle, ent.Comp.Key); }, // Arcane-Edit
             Text = ent.Comp.VerbText,
             Icon = new SpriteSpecifier.Texture(new ResPath("/Textures/Interface/VerbIcons/settings.svg.192dpi.png"))
         });
