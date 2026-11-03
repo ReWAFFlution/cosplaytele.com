@@ -7,6 +7,7 @@
     netsync: false
     sprite: _Arcane/Structures/Storage/inteq.rsi
     noRot: true
+    offset: 0, 0 # 32x32 sprite, ClosetBase's offset is for the tall 32x48 lockers
     layers:
     - state: inteq
       map: ["enum.StorageVisualLayers.Base"]
@@ -34,6 +35,7 @@
     netsync: false
     sprite: _Arcane/Structures/Storage/inteq.rsi
     noRot: true
+    offset: 0, 0 # 32x32 sprite, ClosetBase's offset is for the tall 32x48 lockers
     layers:
     - state: inteq
       map: ["enum.StorageVisualLayers.Base"]
