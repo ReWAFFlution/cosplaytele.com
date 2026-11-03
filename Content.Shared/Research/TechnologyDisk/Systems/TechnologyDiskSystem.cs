@@ -50,6 +50,7 @@ public sealed partial class TechnologyDiskSystem : EntitySystem
         if (ent.Comp.Recipes != null)
             return;
 
+        var rolled = !ent.Comp.Tier.HasValue; // Arcane
         int tier;
         if (ent.Comp.Tier.HasValue)
         {
@@ -62,20 +63,15 @@ public sealed partial class TechnologyDiskSystem : EntitySystem
             ent.Comp.Tier = tier;
         }
 
-        // get a list of every distinct recipe in all the technologies.
-        var bundles = new HashSet<(ProtoId<LatheRecipePrototype> recipe, ProtoId<TechDisciplinePrototype> discipline)>();
-        foreach (var tech in ProtoMan.EnumeratePrototypes<TechnologyPrototype>())
+        // Arcane-Edit-Start: a rolled tier is only a rarity, not every discipline has recipes in every tier
+        var bundles = GetRecipeBundles(tier, ent.Comp.Discipline);
+        while (rolled && bundles.Count == 0 && tier > 1)
         {
-            if (tech.Tier != tier)
-                continue;
-            if (ent.Comp.Discipline != null && tech.Discipline != ent.Comp.Discipline.Value)
-                continue;
-
-            foreach (var recipe in tech.RecipeUnlocks)
-            {
-                bundles.Add((recipe, tech.Discipline));
-            }
+            tier--;
+            ent.Comp.Tier = tier;
+            bundles = GetRecipeBundles(tier, ent.Comp.Discipline);
         }
+        // Arcane-Edit-End
 
         if (bundles.Count == 0)
         {
@@ -91,6 +87,32 @@ public sealed partial class TechnologyDiskSystem : EntitySystem
         Dirty(ent);
         _nameModifier.RefreshNameModifiers(ent.Owner);
     }
+
+    // Arcane-Start
+    /// <summary>
+    /// Every distinct recipe of the technologies in a tier and, if given, a discipline.
+    /// </summary>
+    private HashSet<(ProtoId<LatheRecipePrototype> recipe, ProtoId<TechDisciplinePrototype> discipline)> GetRecipeBundles(
+        int tier,
+        ProtoId<TechDisciplinePrototype>? discipline)
+    {
+        var bundles = new HashSet<(ProtoId<LatheRecipePrototype> recipe, ProtoId<TechDisciplinePrototype> discipline)>();
+        foreach (var tech in ProtoMan.EnumeratePrototypes<TechnologyPrototype>())
+        {
+            if (tech.Tier != tier)
+                continue;
+            if (discipline != null && tech.Discipline != discipline.Value)
+                continue;
+
+            foreach (var recipe in tech.RecipeUnlocks)
+            {
+                bundles.Add((recipe, tech.Discipline));
+            }
+        }
+
+        return bundles;
+    }
+    // Arcane-End
 
     /// <summary>
     /// Attempts to set tier and discipline visuals based on chosen tier and discipline.
