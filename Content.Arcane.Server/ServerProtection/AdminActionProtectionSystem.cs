@@ -1,6 +1,5 @@
 using Content.Arcane.Common.CCVar;
 using Content.Arcane.Common.ServerProtection;
-using Robust.Server.Player;
 using Robust.Shared.Configuration;
 using Robust.Shared.Network;
 using Robust.Shared.Timing;
@@ -14,7 +13,6 @@ public sealed partial class AdminActionProtectionSystem : EntitySystem
 {
     [Dependency] private IConfigurationManager _cfg = default!;
     [Dependency] private IGameTiming _timing = default!;
-    [Dependency] private IPlayerManager _player = default!;
     [Dependency] private ServerProtectionAuditSystem _audit = default!;
     [Dependency] private ServerProtectionPunishmentSystem _punishment = default!;
 
@@ -97,9 +95,9 @@ public sealed partial class AdminActionProtectionSystem : EntitySystem
     /// </summary>
     private void EnforceMeasures(NetUserId admin, string adminName, string reasonTag, bool alert)
     {
-        if (_autoDeAdmin && _player.TryGetSessionById(admin, out var session))
+        if (_autoDeAdmin)
         {
-            _punishment.Suspend(session, $"AdminActionProtection: {reasonTag}");
+            _punishment.Suspend(admin, adminName, $"AdminActionProtection: {reasonTag}");
             if (alert)
             {
                 _punishment.SendAdminAlert(Loc.GetString("admin-action-protection-deadmined",

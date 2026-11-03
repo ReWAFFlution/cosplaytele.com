@@ -5,6 +5,7 @@ using Content.Server.Chat.Managers;
 using Content.Server.Database;
 using Content.Server.GhostKick;
 using Content.Shared.Database;
+using Robust.Server.Player;
 using Robust.Shared.Network;
 using Robust.Shared.Player;
 
@@ -22,6 +23,7 @@ public sealed partial class ServerProtectionPunishmentSystem : EntitySystem
     [Dependency] private IChatManager _chat = default!;
     [Dependency] private IServerDbManager _db = default!;
     [Dependency] private IPlayerLocator _locator = default!;
+    [Dependency] private IPlayerManager _player = default!;
 
     /// <summary>
     ///     Bans a player by user id, with their last known address and HWID. 0 minutes is permanent.
@@ -54,26 +56,29 @@ public sealed partial class ServerProtectionPunishmentSystem : EntitySystem
 
     /// <summary>
     ///     Suspends the admin record, so neither readmin nor reconnecting gives the permissions back until an
-    ///     authorized admin lifts the suspension in the permissions panel. Admins without a database record
-    ///     (local or transient) are de-admined instead.
+    ///     authorized admin lifts the suspension in the permissions panel. Works for admins that already left,
+    ///     their bans can finish after they disconnect. Admins without a database record (local or transient)
+    ///     are de-admined instead.
     /// </summary>
-    public async void Suspend(ICommonSession player, string reason)
+    public async void Suspend(NetUserId userId, string name, string reason)
     {
-        var admin = await _db.GetAdminDataForAsync(player.UserId);
-        if (admin == null)
-        {
-            DeAdmin(player, reason);
-            return;
-        }
-
-        if (!admin.Suspended)
+        var admin = await _db.GetAdminDataForAsync(userId);
+        if (admin != null && !admin.Suspended)
         {
             admin.Suspended = true;
             await _db.UpdateAdminAsync(admin);
         }
 
-        _adminManager.ReloadAdmin(player);
-        Log.Warning($"{player.Name} was suspended as admin: {reason}");
+        if (admin != null)
+            Log.Warning($"{name} ({userId}) was suspended as admin: {reason}");
+
+        if (!_player.TryGetSessionById(userId, out var session))
+            return;
+
+        if (admin != null)
+            _adminManager.ReloadAdmin(session);
+        else if (_adminManager.IsAdmin(session, includeDeAdmin: true))
+            DeAdmin(session, reason);
     }
 
     public void Kick(ICommonSession player, string reason)
