@@ -134,6 +134,10 @@ public sealed partial class AtmosAlertsComputerSystem : SharedAtmosAlertsCompute
         if (gridUid == null)
             return;
 
+        // Arcane-Start: the list of alarms does not depend on the map view, a new grid has no NavMap yet
+        UpdateTrackedDevice(uid, component, gridUid.Value, isAdding);
+        // Arcane-End
+
         if (!TryComp<NavMapComponent>(xform.GridUid, out var navMap))
             return;
 
@@ -142,8 +146,6 @@ public sealed partial class AtmosAlertsComputerSystem : SharedAtmosAlertsCompute
 
         if (!isAdding)
         {
-            UpdateTrackedDevice(uid, component, gridUid.Value, false);
-
             if (_consolesByGrid.TryGetValue(gridUid.Value, out var trackedConsoles))
             {
                 foreach (var ent in trackedConsoles)
@@ -165,7 +167,6 @@ public sealed partial class AtmosAlertsComputerSystem : SharedAtmosAlertsCompute
             return;
 
 //        var netEntity = GetNetEntity(uid); // Arcane-Edit: declared here > declared before the removal branch
-        UpdateTrackedDevice(uid, component, gridUid.Value, true); // Arcane
 
         // Arcane-Edit-Start
         if (!_consolesByGrid.TryGetValue(gridUid.Value, out var consoles))
@@ -507,7 +508,10 @@ public sealed partial class AtmosAlertsComputerSystem : SharedAtmosAlertsCompute
                 continue;
 
             if (TryGetAtmosDeviceNavMapData(ent, entComponent, entXform, out var data))
+            {
                 atmosDeviceNavMapData.Add(data.Value);
+                UpdateTrackedDevice(ent, entComponent, gridUid, true); // Arcane: this walk already found every device
+            }
         }
 
         return atmosDeviceNavMapData;
