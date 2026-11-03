@@ -30,7 +30,6 @@ public sealed partial class SmesSystem : EntitySystem // goob edit - made public
         SubscribeLocalEvent<SmesComponent, MapInitEvent>(OnMapInit);
         SubscribeLocalEvent<SmesComponent, ChargeChangedEvent>(OnBatteryChargeChanged);
         // Arcane-Start
-        SubscribeLocalEvent<SmesComponent, ComponentInit>(OnInit);
         SubscribeLocalEvent<SmesComponent, RefreshPartsEvent>(OnPartsRefresh);
         SubscribeLocalEvent<SmesComponent, UpgradeExamineEvent>(OnUpgradeExamine);
         // Arcane-End
@@ -40,23 +39,6 @@ public sealed partial class SmesSystem : EntitySystem // goob edit - made public
     {
         UpdateSmesState(uid, component);
     }
-
-    // Arcane-Start
-    /// <summary>
-    /// Takes the base rates before startup refreshes parts, so a SMES built with upgraded parts does not
-    /// store its upgraded rates as the base.
-    /// </summary>
-    private void OnInit(EntityUid uid, SmesComponent component, ComponentInit args)
-    {
-        if (!TryComp<PowerNetworkBatteryComponent>(uid, out var netBattery))
-            return;
-
-        component.BaseMaxSupply = netBattery.MaxSupply;
-        component.BaseMaxChargeRate = netBattery.MaxChargeRate;
-        component.FinalMaxSupply = netBattery.MaxSupply;
-        component.FinalMaxChargeRate = netBattery.MaxChargeRate;
-    }
-    // Arcane-End
 
     private void OnBatteryChargeChanged(EntityUid uid, SmesComponent component, ref ChargeChangedEvent args)
     {
@@ -69,9 +51,14 @@ public sealed partial class SmesSystem : EntitySystem // goob edit - made public
         if (!TryComp<PowerNetworkBatteryComponent>(uid, out var netBattery))
             return;
 
+        // The first refresh runs before any upgrade touched the battery (a machine built with parts refreshes
+        // on startup, before map init), so this is the unupgraded value; later refreshes reuse it.
+        component.BaseMaxSupply ??= netBattery.MaxSupply;
+        component.BaseMaxChargeRate ??= netBattery.MaxChargeRate;
+
         var rating = Math.Max(1f, args.GetPartRatingSum(MachinePartIds.Capacitor));
-        component.FinalMaxSupply = component.BaseMaxSupply * rating;
-        component.FinalMaxChargeRate = component.BaseMaxChargeRate * rating;
+        component.FinalMaxSupply = component.BaseMaxSupply.Value * rating;
+        component.FinalMaxChargeRate = component.BaseMaxChargeRate.Value * rating;
         netBattery.MaxSupply = component.FinalMaxSupply;
         netBattery.MaxChargeRate = component.FinalMaxChargeRate;
 
@@ -80,12 +67,12 @@ public sealed partial class SmesSystem : EntitySystem // goob edit - made public
 
     private static void OnUpgradeExamine(EntityUid uid, SmesComponent component, UpgradeExamineEvent args)
     {
-        var inputMultiplier = component.BaseMaxChargeRate <= 0f
+        var inputMultiplier = component.BaseMaxChargeRate is not > 0f
             ? 1f
-            : component.FinalMaxChargeRate / component.BaseMaxChargeRate;
-        var outputMultiplier = component.BaseMaxSupply <= 0f
+            : component.FinalMaxChargeRate / component.BaseMaxChargeRate.Value;
+        var outputMultiplier = component.BaseMaxSupply is not > 0f
             ? 1f
-            : component.FinalMaxSupply / component.BaseMaxSupply;
+            : component.FinalMaxSupply / component.BaseMaxSupply.Value;
 
         args.AddPercentageUpgrade("machine-upgrade-power-input", inputMultiplier);
         args.AddPercentageUpgrade("machine-upgrade-power-output", outputMultiplier);

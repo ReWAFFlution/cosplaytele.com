@@ -42,11 +42,15 @@ public sealed partial class SmesComponent : Component
     [ViewVariables]
     public ChargeState ChargeState = ChargeState.Still;
     // Arcane-Start
+    /// <summary>
+    /// Supply and charge rate without parts, taken at the first parts refresh before any upgrade applies.
+    /// Saved with the entity, so a loaded upgraded SMES keeps its real base.
+    /// </summary>
     [DataField]
-    public float BaseMaxSupply = 200000f;
+    public float? BaseMaxSupply;
 
     [DataField]
-    public float BaseMaxChargeRate = 200000f;
+    public float? BaseMaxChargeRate;
 
     [DataField]
     public float FinalMaxSupply = 200000f;

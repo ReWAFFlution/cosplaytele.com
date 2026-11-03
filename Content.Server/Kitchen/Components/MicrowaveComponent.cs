@@ -14,8 +14,11 @@ namespace Content.Server.Kitchen.Components
         public float CookTimeMultiplier = 1;
 
         // Arcane-Start
-        [ViewVariables(VVAccess.ReadWrite)]
-        public float BaseCookTimeMultiplier = 1;
+        /// <summary>
+        /// Values without parts, taken at the first parts refresh before any upgrade applies; saved with the entity.
+        /// </summary>
+        [DataField]
+        public float? BaseCookTimeMultiplier;
         // Arcane-End
 
         [DataField]
@@ -90,8 +93,8 @@ namespace Content.Server.Kitchen.Components
         public int Capacity = 10;
 
         // Arcane-Start
-        [ViewVariables(VVAccess.ReadWrite)]
-        public int BaseCapacity = 10;
+        [DataField]
+        public int? BaseCapacity;
         // Arcane-End
 
         [DataField]
@@ -110,8 +113,8 @@ namespace Content.Server.Kitchen.Components
         public float ExplosionChance = .1f;
 
         // Arcane-Start
-        [ViewVariables(VVAccess.ReadWrite)]
-        public float BaseExplosionChance = .1f;
+        [DataField]
+        public float? BaseExplosionChance;
 
         [DataField]
         public ProtoId<MachinePartPrototype> MicroLaserPart = "MicroLaser";

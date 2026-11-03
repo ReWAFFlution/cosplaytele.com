@@ -290,12 +290,6 @@ namespace Content.Server.Kitchen.EntitySystems
         {
             // this really does have to be in ComponentInit
             ent.Comp.Storage = _container.EnsureContainer<Container>(ent, ent.Comp.ContainerId);
-
-            // Arcane-Start: before startup refreshes parts, so an upgraded build does not become the base
-            ent.Comp.BaseCookTimeMultiplier = ent.Comp.CookTimeMultiplier;
-            ent.Comp.BaseCapacity = ent.Comp.Capacity;
-            ent.Comp.BaseExplosionChance = ent.Comp.ExplosionChance;
-            // Arcane-End
         }
 
         private void OnMapInit(Entity<MicrowaveComponent> ent, ref MapInitEvent args)
@@ -306,11 +300,17 @@ namespace Content.Server.Kitchen.EntitySystems
         // Arcane-Start
         private void OnPartsRefresh(EntityUid uid, MicrowaveComponent component, RefreshPartsEvent args)
         {
+            // The first refresh runs before any upgrade changed these (a machine built with parts refreshes on
+            // startup, before map init), so they are the unupgraded values; later refreshes reuse them.
+            component.BaseCookTimeMultiplier ??= component.CookTimeMultiplier;
+            component.BaseCapacity ??= component.Capacity;
+            component.BaseExplosionChance ??= component.ExplosionChance;
+
             var microLaserTier = args.GetPartRating(component.MicroLaserPart);
             var matterBinTier = args.GetPartRating(component.MatterBinPart);
-            component.CookTimeMultiplier = component.BaseCookTimeMultiplier * RefreshPartsEvent.GetLinearMultiplier(microLaserTier, 0.1f, 0.5f, 1.2f);
-            component.ExplosionChance = MathF.Max(0f, component.BaseExplosionChance - microLaserTier * 0.05f);
-            component.Capacity = (int)MathF.Round(component.BaseCapacity * RefreshPartsEvent.GetPositiveTierMultiplier(matterBinTier));
+            component.CookTimeMultiplier = component.BaseCookTimeMultiplier.Value * RefreshPartsEvent.GetLinearMultiplier(microLaserTier, 0.1f, 0.5f, 1.2f);
+            component.ExplosionChance = MathF.Max(0f, component.BaseExplosionChance.Value - microLaserTier * 0.05f);
+            component.Capacity = (int)MathF.Round(component.BaseCapacity.Value * RefreshPartsEvent.GetPositiveTierMultiplier(matterBinTier));
 
             UpdateUserInterfaceState(uid, component);
         }
@@ -320,12 +320,12 @@ namespace Content.Server.Kitchen.EntitySystems
             var speedMultiplier = component.CookTimeMultiplier <= 0f
                 ? 1f
                 : 1f / component.CookTimeMultiplier;
-            var capacityMultiplier = component.BaseCapacity <= 0
+            var capacityMultiplier = component.BaseCapacity is not > 0
                 ? 1f
-                : (float)component.Capacity / component.BaseCapacity;
-            var malfunctionReduction = component.BaseExplosionChance <= 0f
+                : (float)component.Capacity / component.BaseCapacity.Value;
+            var malfunctionReduction = component.BaseExplosionChance is not > 0f
                 ? 1f
-                : component.ExplosionChance / component.BaseExplosionChance;
+                : component.ExplosionChance / component.BaseExplosionChance.Value;
 
             args.AddPercentageUpgrade("machine-upgrade-cook-speed", speedMultiplier);
             args.AddPercentageUpgrade("machine-upgrade-capacity", capacityMultiplier);
