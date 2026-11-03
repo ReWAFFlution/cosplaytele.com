@@ -1,5 +1,6 @@
 using Content.Arcane.Common.Input;
 using Content.Arcane.Shared.Posing;
+using Robust.Client.GameObjects;
 using Robust.Client.Input;
 using Robust.Client.Player;
 
@@ -8,6 +9,7 @@ namespace Content.Arcane.Client.Posing;
 public sealed partial class PosingSystem : SharedPosingSystem
 {
     [Dependency] private IInputManager _input = default!;
+    [Dependency] private InputSystem _inputSystem = default!;
     [Dependency] private IPlayerManager _player = default!;
     [Dependency] private SpriteSystem _sprite = default!;
 
@@ -18,6 +20,8 @@ public sealed partial class PosingSystem : SharedPosingSystem
         base.Initialize();
 
         SubscribeLocalEvent<PosingComponent, AfterAutoHandleStateEvent>(OnAfterHandleState);
+        // Broadcast, not directed: directed subscribers run first, and the engine then sets the entity's own context.
+        SubscribeLocalEvent<LocalPlayerAttachedEvent>(OnLocalPlayerAttached, after: [typeof(InputSystem)]);
 
         _input.Contexts.GetContext("human").AddFunction(ArcaneKeyFunctions.TogglePosing);
 
@@ -40,25 +44,36 @@ public sealed partial class PosingSystem : SharedPosingSystem
 
     private void OnAfterHandleState(Entity<PosingComponent> ent, ref AfterAutoHandleStateEvent args)
     {
-        if (_player.LocalEntity == ent.Owner)
-        {
-            // The server can end posing (stun, death), so keep the input context in sync.
-            var context = ent.Comp.Posing ? PosingContext : ent.Comp.DefaultInputContext;
-            if (_input.Contexts.ActiveContext.Name != context)
-                _input.Contexts.SetActiveContext(context);
-        }
+        // The server can end posing (stun, death), so keep the input context in sync.
+        SyncInputContext(ent);
 
         if (!ent.Comp.Posing)
             ResetSprite(ent);
+    }
+
+    private void OnLocalPlayerAttached(LocalPlayerAttachedEvent args)
+    {
+        // Returning to a body that stayed in PVS sends no new state, so the attach is the only signal here.
+        if (TryComp<PosingComponent>(args.Entity, out var posing))
+            SyncInputContext((args.Entity, posing));
+    }
+
+    private void SyncInputContext(Entity<PosingComponent> ent)
+    {
+        if (_player.LocalEntity != ent.Owner || ent.Comp.Posing == (_input.Contexts.ActiveContext.Name == PosingContext))
+            return;
+
+        if (ent.Comp.Posing)
+            _input.Contexts.SetActiveContext(PosingContext);
+        else
+            _inputSystem.SetEntityContextActive();
     }
 
     protected override void OnPosingToggled(EntityUid uid, PosingComponent posing)
     {
         base.OnPosingToggled(uid, posing);
 
-        if (_player.LocalEntity == uid)
-            _input.Contexts.SetActiveContext(posing.Posing ? PosingContext : posing.DefaultInputContext);
-
+        SyncInputContext((uid, posing));
         ResetSprite((uid, posing));
     }
 
