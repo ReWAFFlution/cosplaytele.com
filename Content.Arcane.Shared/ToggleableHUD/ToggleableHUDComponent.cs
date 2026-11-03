@@ -13,12 +13,21 @@ public sealed partial class ToggleableHUDComponent : Component
     [DataField]
     public EntProtoId Action = "ActionToggleHUDs";
 
+    /// <summary>
+    /// The granted action, set at runtime.
+    /// </summary>
     [DataField]
     public EntityUid? ActionEntity;
 
+    /// <summary>
+    /// Whether the overlays are on. Only the action changes it: true in YAML adds no overlays by itself.
+    /// </summary>
     [DataField, AutoNetworkedField]
     public bool IsToggled;
 
+    /// <summary>
+    /// Damage containers whose health bars the toggled HUD shows.
+    /// </summary>
     [DataField]
     public List<ProtoId<DamageContainerPrototype>> DamageContainers = new()
     {
