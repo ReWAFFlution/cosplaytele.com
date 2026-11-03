@@ -91,8 +91,9 @@ public sealed partial class DevourSystem : EntitySystem
             return;
         }
 
-        // Arcane-Start: indestructible structures, like bitrunning domain walls, can't be eaten
-        if (!CanDevourStructure(target))
+        // Arcane-Start: indestructible structures, like bitrunning domain walls, can't be eaten.
+        // What the stomach stores is kept, not destroyed, so only the destroying path needs this.
+        if (!_whitelistSystem.IsWhitelistPass(ent.Comp.StomachStorageWhitelist, target) && !CanDevourStructure(target))
         {
             _popupSystem.PopupEntity(Loc.GetString("devour-action-popup-message-fail-target-indestructible"), ent.Owner, ent.Owner);
             return;

@@ -509,7 +509,7 @@ public sealed partial class QuantumServerSystem : EntitySystem
 
         if (pod.Avatar != null || pod.DeployedAvatar)
         {
-            if (TryReconnectRunner((podUid, pod), user))
+            if (TryReconnectRunner((podUid, pod), (serverUid, server), user))
                 return true;
 
             if (pod.DeployedAvatar)
@@ -541,9 +541,6 @@ public sealed partial class QuantumServerSystem : EntitySystem
         connection.RunnerMind = mindId;
         connection.NoHit = true;
         connection.DeleteOnDisconnect = GetDeleteOnDisconnect(server);
-        EnsureComp<AvatarNavRelayComponent>(avatar).RelayEntity = podUid;
-        EnsureComp<AvatarNavRelayComponent>(podUid).RelayEntity = avatar;
-
         _mind.TransferTo(mindId, avatar, mind: mind);
         PlayLocalSound(user, pod.ConnectStasisSound);
         PlayLocalSound(avatar, pod.ConnectAvatarSound);
@@ -570,9 +567,14 @@ public sealed partial class QuantumServerSystem : EntitySystem
         return true;
     }
 
-    private bool TryReconnectRunner(Entity<NetpodComponent> pod, EntityUid user)
+    private bool TryReconnectRunner(Entity<NetpodComponent> pod, Entity<QuantumServerComponent> serverEnt, EntityUid user)
     {
         if (pod.Comp.Avatar is not { } avatarUid || !TryComp<AvatarConnectionComponent>(avatarUid, out var connection))
+            return false;
+
+        // A kept avatar only belongs to the run it was made in: after the pod moved to another server, or the
+        // server started another domain, it stands on a map this server does not run.
+        if (connection.Server != serverEnt.Owner || Transform(avatarUid).MapUid != serverEnt.Comp.DomainMapUid)
             return false;
 
         if (HasComp<ActorComponent>(avatarUid))
@@ -591,23 +593,15 @@ public sealed partial class QuantumServerSystem : EntitySystem
 
         _mind.TransferTo(mindId, avatarUid, mind: mind);
         _actions.AddAction(avatarUid, ref connection.DisconnectActionEntity, connection.DisconnectActionPrototype, avatarUid);
-        EnsureComp<AvatarNavRelayComponent>(avatarUid).RelayEntity = pod.Owner;
-        EnsureComp<AvatarNavRelayComponent>(pod.Owner).RelayEntity = avatarUid;
-
         connection.Netpod = pod.Owner;
         connection.OriginalBody = user;
-        if (pod.Comp.LinkedServer != null)
-            connection.Server = pod.Comp.LinkedServer;
 
-        if (connection.Server != null && TryComp<QuantumServerComponent>(connection.Server.Value, out var server))
-        {
-            server.ActiveConnections.Add(avatarUid);
-            var objectivePopupText = server.ObjectiveCompleted
-                ? Loc.GetString("bitrunning-objective-completed")
-                : GetObjectiveInstructions(server);
-            _popup.PopupEntity(objectivePopupText, avatarUid, avatarUid, PopupType.Large);
-            Dirty(connection.Server.Value, server);
-        }
+        serverEnt.Comp.ActiveConnections.Add(avatarUid);
+        var objectivePopupText = serverEnt.Comp.ObjectiveCompleted
+            ? Loc.GetString("bitrunning-objective-completed")
+            : GetObjectiveInstructions(serverEnt.Comp);
+        _popup.PopupEntity(objectivePopupText, avatarUid, avatarUid, PopupType.Large);
+        Dirty(serverEnt);
 
         _bitrunningDisk.RefreshAvatarEffects(avatarUid);
         return true;
@@ -686,8 +680,6 @@ public sealed partial class QuantumServerSystem : EntitySystem
 
         if (podUid != null && TryComp<NetpodComponent>(podUid.Value, out var pod))
         {
-            EnsureComp<AvatarNavRelayComponent>(podUid.Value).RelayEntity = null;
-
             pod.Occupant = TryComp<NetpodContainerComponent>(podUid.Value, out var containerComp)
                 ? containerComp.BodyContainer.ContainedEntity
                 : null;
@@ -1104,9 +1096,6 @@ public sealed partial class QuantumServerSystem : EntitySystem
             if (pod.Avatar == ent.Owner)
                 pod.Avatar = null;
 
-            if (TryComp<AvatarNavRelayComponent>(podUid, out var podRelay) && podRelay.RelayEntity == ent.Owner)
-                podRelay.RelayEntity = null;
-
             pod.Occupant = TryComp<NetpodContainerComponent>(podUid, out var containerComp)
                 ? containerComp.BodyContainer.ContainedEntity
                 : null;
@@ -1158,8 +1147,6 @@ public sealed partial class QuantumServerSystem : EntitySystem
         ent.Comp.DisconnectActionEntity = null;
         _actions.AddAction(newAvatarUid, ref newConnection.DisconnectActionEntity, newConnection.DisconnectActionPrototype, newAvatarUid);
         StripNonAvatarPolymorphComponents(newAvatarUid);
-        EnsureComp<AvatarNavRelayComponent>(newAvatarUid).RelayEntity = newConnection.Netpod;
-
         if (newConnection.Server is { } serverUid && TryComp<QuantumServerComponent>(serverUid, out var server))
         {
             server.ActiveConnections.Remove(ent.Owner);
@@ -1171,8 +1158,6 @@ public sealed partial class QuantumServerSystem : EntitySystem
         {
             if (pod.Avatar == ent.Owner)
                 pod.Avatar = newAvatarUid;
-
-            EnsureComp<AvatarNavRelayComponent>(podUid).RelayEntity = newAvatarUid;
 
             _netpod.UpdateVisuals((podUid, pod));
         }

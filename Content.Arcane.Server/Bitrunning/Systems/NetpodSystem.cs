@@ -276,28 +276,31 @@ public sealed partial class NetpodSystem : EntitySystem
         return _server.ResolveAvatarSpecies(server, user);
     }
 
-    private HashSet<ProtoId<StartingGearPrototype>> GetAllowedLoadouts(NetpodLoadoutComponent loadout, ProtoId<SpeciesPrototype>? avatarSpecies)
+    private static HashSet<ProtoId<StartingGearPrototype>> GetAllowedLoadouts(NetpodLoadoutComponent loadout, ProtoId<SpeciesPrototype>? avatarSpecies)
     {
-        if (avatarSpecies is { } species && loadout.AllowedLoadoutSpecie.TryGetValue(species, out var speciesLoadouts))
-            return new HashSet<ProtoId<StartingGearPrototype>>(speciesLoadouts);
+        return new HashSet<ProtoId<StartingGearPrototype>>(GetAllowedLoadoutList(loadout, avatarSpecies));
+    }
 
-        return new HashSet<ProtoId<StartingGearPrototype>>(loadout.AllowedLoadout);
+    private static List<ProtoId<StartingGearPrototype>> GetAllowedLoadoutList(NetpodLoadoutComponent loadout, ProtoId<SpeciesPrototype>? avatarSpecies)
+    {
+        return avatarSpecies is { } species && loadout.AllowedLoadoutSpecie.TryGetValue(species, out var speciesLoadouts)
+            ? speciesLoadouts
+            : loadout.AllowedLoadout;
     }
 
     /// <param name="avatarSpecies">Species of the avatar body actually spawned, null for the generic avatar.</param>
     public ProtoId<StartingGearPrototype>? GetResolvedPreferredLoadout(NetpodLoadoutComponent loadout, ProtoId<SpeciesPrototype>? avatarSpecies)
     {
-        if (avatarSpecies is not { } species)
-            return loadout.PreferredLoadout;
-
-        // The kit was picked for whichever avatar the UI showed; the profile may have changed since.
-        if (loadout.PreferredLoadout is { } preferred && loadout.AllowedLoadoutSpecie.TryGetValue(species, out var allowed) && allowed.Contains(preferred))
+        // The choice is stored on the pod and outlives whoever made it: a Vox kit picked by the last user must not
+        // reach the next avatar, so it is checked against what this avatar may wear every time.
+        var allowed = GetAllowedLoadoutList(loadout, avatarSpecies);
+        if (loadout.PreferredLoadout is { } preferred && (allowed.Count == 0 || allowed.Contains(preferred)))
             return preferred;
 
-        if (loadout.PreferredLoadoutSpecie.TryGetValue(species, out var speciePreferred))
+        if (avatarSpecies is { } species && loadout.PreferredLoadoutSpecie.TryGetValue(species, out var speciePreferred))
             return speciePreferred;
 
-        return loadout.AllowedLoadoutSpecie.ContainsKey(species) ? null : loadout.PreferredLoadout;
+        return allowed.Count > 0 ? allowed[0] : (ProtoId<StartingGearPrototype>?) null;
     }
 
     private bool HasCompInContainerTree<T>(EntityUid root) where T : Component
@@ -392,6 +395,10 @@ public sealed partial class NetpodSystem : EntitySystem
 
         if (!HasComp<QuantumServerComponent>(args.Source))
             return;
+
+        // An avatar deployed through another server says nothing about this server's domain.
+        if (ent.Comp.LinkedServer != args.Source)
+            ent.Comp.DeployedAvatar = false;
 
         ent.Comp.LinkedServer = args.Source;
     }
