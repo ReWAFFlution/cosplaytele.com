@@ -3,14 +3,13 @@ using Content.IntegrationTests.Fixtures;
 using Content.Shared.Research.TechnologyDisk.Components;
 using Content.Shared.Research.TechnologyDisk.Systems;
 using Robust.Shared.GameObjects;
-using Robust.Shared.Prototypes;
 
 namespace Content.IntegrationTests.Tests._Arcane.Research;
 
 [TestOf(typeof(TechnologyDiskSystem))]
 public sealed class TechnologyDiskTierTest : GameTest
 {
-    private static readonly EntProtoId Disk = "TestTechnologyDiskRolledTierThree";
+    private const string Disk = "TestTechnologyDiskRolledTierThree";
 
     [TestPrototypes]
     private const string Prototypes = @"
