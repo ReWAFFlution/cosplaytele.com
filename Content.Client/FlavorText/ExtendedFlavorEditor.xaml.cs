@@ -28,6 +28,8 @@ public sealed partial class ExtendedFlavorEditor : Control
     private readonly Dictionary<TextEdit, Func<ExtendedFlavorText, string>> _getters = new();
     private ExtendedFlavorText _extended = new();
     private string _flavor = string.Empty;
+    private int _previewTab;
+    private bool _previewDirty = true;
 
     public ExtendedFlavorEditor()
     {
@@ -85,7 +87,9 @@ public sealed partial class ExtendedFlavorEditor : Control
         }
 
         Tabs.AddChild(Preview);
-        Tabs.SetTabTitle(Tabs.ChildCount - 1, Loc.GetString("flavor-tab-preview"));
+        _previewTab = Tabs.ChildCount - 1;
+        Tabs.SetTabTitle(_previewTab, Loc.GetString("flavor-tab-preview"));
+        Tabs.OnTabChanged += _ => RefreshPreview();
     }
 
     /// <summary>
@@ -107,6 +111,19 @@ public sealed partial class ExtendedFlavorEditor : Control
 
     private void UpdatePreview()
     {
+        _previewDirty = true;
+        RefreshPreview();
+    }
+
+    /// <summary>
+    /// The preview rebuilds its controls on every update, so typing only marks it and its tab catches up when shown.
+    /// </summary>
+    private void RefreshPreview()
+    {
+        if (!_previewDirty || Tabs.CurrentTab != _previewTab)
+            return;
+
+        _previewDirty = false;
         Preview.SetFlavor(_flavor, _extended, true);
     }
 
