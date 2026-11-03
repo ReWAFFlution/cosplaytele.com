@@ -3,6 +3,7 @@ using Content.Arcane.Shared.Posing;
 using Robust.Client.GameObjects;
 using Robust.Client.Input;
 using Robust.Client.Player;
+using Robust.Shared.Player;
 
 namespace Content.Arcane.Client.Posing;
 
