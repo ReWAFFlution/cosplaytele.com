@@ -21,7 +21,7 @@
         defaultPrototype: Beaker
     # Arcane-Start
     partRequirements:
-      Servo: 3
+      MatterBin: 3
     # Arcane-End
 
 - type: entity
