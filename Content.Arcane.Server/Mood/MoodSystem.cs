@@ -155,12 +155,25 @@ public sealed partial class MoodSystem : EntitySystem
         while (query.MoveNext(out var uid, out var mood))
         {
             if (enabled)
-                SuppressSatiationSpeed(uid, mood);
+                ActivateMood(uid, mood);
             else
                 RestoreSatiationSpeed(uid, mood);
 
             _movementSpeedModifier.RefreshMovementSpeedModifiers(uid);
         }
+    }
+
+    /// <summary>
+    /// Everything mood needs to run on a body, for bodies made while it is on and for those it gets turned on for later.
+    /// </summary>
+    private void ActivateMood(EntityUid uid, MoodComponent component)
+    {
+        SuppressSatiationSpeed(uid, component);
+
+        EnsureComp<NetMoodComponent>(uid);
+        RefreshMood(uid, component);
+        DoMoodThresholdsEffects(uid, component, force: true);
+        SetCritThreshold(uid, component, GetMovementThreshold(component.CurrentMoodThreshold));
     }
 
     private void OnShutdown(EntityUid uid, MoodComponent component, ComponentShutdown args)
@@ -549,12 +562,7 @@ public sealed partial class MoodSystem : EntitySystem
         if (!_config.GetCVar(ArcaneCVars.MoodEnabled))
             return;
 
-        SuppressSatiationSpeed(uid, component);
-
-        EnsureComp<NetMoodComponent>(uid);
-        RefreshMood(uid, component);
-        DoMoodThresholdsEffects(uid, component, force: true);
-        SetCritThreshold(uid, component, GetMovementThreshold(component.CurrentMoodThreshold));
+        ActivateMood(uid, component);
     }
 
     private void SetMood(EntityUid uid, float amount, MoodComponent? component = null, bool force = false, bool refresh = false)
@@ -787,8 +795,8 @@ public sealed partial class MoodSystem : EntitySystem
     }
 
     /// <summary>
-    /// Replaces mood's share of the crit thresholds: the current thresholds are divided by the multiplier mood
-    /// applied before and scaled by the new one, so whatever else changed them in the meantime is kept.
+    /// Replaces mood's share of the crit thresholds: takes back the amounts mood added before and adds the
+    /// new ones, so whatever else changed the thresholds in the meantime is kept.
     /// </summary>
     private void ApplyCritMultiplier(EntityUid uid, MoodComponent component, float multiplier)
     {
@@ -799,16 +807,22 @@ public sealed partial class MoodSystem : EntitySystem
             || !_mobThreshold.TryGetThresholdForState(uid, MobState.Dead, out var currentDead, mobThresholds))
             return;
 
-        var scale = multiplier / component.AppliedCritMultiplier;
-        component.AppliedCritMultiplier = multiplier;
+        var baseSoft = currentSoft.Value.Float() - component.AppliedSoftCritDelta;
+        var baseHard = currentHard.Value.Float() - component.AppliedHardCritDelta;
+        var baseDead = currentDead.Value.Float() - component.AppliedDeadDelta;
 
-        var soft = currentSoft.Value.Float() * scale;
-        var hard = currentHard.Value.Float() * scale;
-        var dead = currentDead.Value.Float() * scale;
+        var soft = baseSoft * multiplier;
+        var hard = baseHard * multiplier;
+        var dead = baseDead * multiplier;
 
         // Keep threshold ordering valid after scaling.
         hard = MathF.Max(hard, soft + 0.01f);
         dead = MathF.Max(dead, hard + 0.01f);
+
+        component.AppliedCritMultiplier = multiplier;
+        component.AppliedSoftCritDelta = soft - baseSoft;
+        component.AppliedHardCritDelta = hard - baseHard;
+        component.AppliedDeadDelta = dead - baseDead;
 
         _mobThreshold.SetMobStateThreshold(uid, FixedPoint2.New(soft), MobState.SoftCrit, mobThresholds);
         _mobThreshold.SetMobStateThreshold(uid, FixedPoint2.New(hard), MobState.Critical, mobThresholds);

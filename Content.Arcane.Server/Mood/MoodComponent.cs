@@ -80,11 +80,23 @@ public sealed partial class MoodComponent : Component
     public float DecreaseCritThreshold = 0.9f;
 
     /// <summary>
-    /// The crit threshold multiplier mood currently applies. Mood divides out only its own share when it changes,
-    /// so threshold changes made by others in the meantime (Soul Tap) stay.
+    /// The crit threshold multiplier mood currently applies.
     /// </summary>
     [ViewVariables]
     public float AppliedCritMultiplier = 1f;
+
+    /// <summary>
+    /// What mood added to each threshold. Only these amounts are taken back when the multiplier changes, so an
+    /// absolute change made by others in the meantime (Soul Tap) stays exactly as it was.
+    /// </summary>
+    [ViewVariables]
+    public float AppliedSoftCritDelta;
+
+    [ViewVariables]
+    public float AppliedHardCritDelta;
+
+    [ViewVariables]
+    public float AppliedDeadDelta;
 
     /// <summary>
     /// The hunger and thirst slowdown mood took over at startup, given back when mood stops running.
