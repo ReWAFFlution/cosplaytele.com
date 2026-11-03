@@ -3,7 +3,9 @@ using Content.Shared.Inventory;
 using Content.Shared.Preferences;
 using Content.Shared.Preferences.Loadouts;
 using Content.Shared.Roles;
+using Content.Trauma.Common.Inventory;
 using Robust.Shared.Map;
+using Robust.Shared.Prototypes;
 
 namespace Content.Client.Lobby.UI.ProfileEditorControls;
 
@@ -12,7 +14,7 @@ namespace Content.Client.Lobby.UI.ProfileEditorControls;
 /// </summary>
 public sealed partial class ProfilePreviewSpriteView
 {
-    private static readonly string[] UnderwearSlots = ["underwear", "undershirt", "socks", "wrists"];
+    private static readonly ProtoId<InventorySlotPrototype>[] UnderwearSlots = ["underwear", "undershirt", "socks", "wrists"];
 
     private void GiveDummyUnderwear(HumanoidCharacterProfile profile, JobPrototype job)
     {
@@ -29,17 +31,26 @@ public sealed partial class ProfilePreviewSpriteView
                 if (!_prototypeManager.Resolve(selected.Prototype, out var loadoutProto))
                     continue;
 
-                foreach (var slot in UnderwearSlots)
-                {
-                    var itemType = ((IEquipmentLoadout) loadoutProto).GetGear(slot);
-                    if (string.IsNullOrEmpty(itemType))
-                        continue;
+                // Same order as StationSpawningSystem.EquipStartingGear(LoadoutPrototype).
+                if (_prototypeManager.Resolve(loadoutProto.StartingGear, out var startingGear))
+                    EquipUnderwear(inventory, startingGear);
 
-                    var item = EntMan.SpawnEntity(itemType, MapCoordinates.Nullspace);
-                    if (!inventory.TryEquip(PreviewDummy, item, slot, silent: true, force: true))
-                        EntMan.DeleteEntity(item);
-                }
+                EquipUnderwear(inventory, loadoutProto);
             }
+        }
+    }
+
+    private void EquipUnderwear(InventorySystem inventory, IEquipmentLoadout gear)
+    {
+        foreach (var slot in UnderwearSlots)
+        {
+            var itemType = gear.GetGear(slot);
+            if (string.IsNullOrEmpty(itemType))
+                continue;
+
+            var item = EntMan.SpawnEntity(itemType, MapCoordinates.Nullspace);
+            if (!inventory.TryEquip(PreviewDummy, item, slot, silent: true, force: true))
+                EntMan.DeleteEntity(item);
         }
     }
 }
