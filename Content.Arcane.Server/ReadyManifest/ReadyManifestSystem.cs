@@ -114,9 +114,8 @@ public sealed partial class ReadyManifestSystem : EntitySystem
                 if (!include)
                     continue;
 
-                var names = manifest.GetOrNew(job);
-                if (!names.Contains(profile.Name))
-                    names.Add(profile.Name);
+                // One entry per ready player: names are not unique between accounts.
+                manifest.GetOrNew(job).Add(profile.Name);
             }
         }
 
