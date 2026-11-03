@@ -161,6 +161,7 @@
         visible: false
         shader: unshaded
     - type: Flash
+      flashingTime: 1 # Arcane
     - type: RevolutionaryConverter
     - type: LimitedCharges
       maxCharges: 5
