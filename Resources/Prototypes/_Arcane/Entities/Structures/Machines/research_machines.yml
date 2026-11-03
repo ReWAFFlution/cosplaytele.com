@@ -39,6 +39,9 @@
       machine_board: !type:Container
       machine_parts: !type:Container
       destructive-analyzer-container: !type:Container
+  - type: EmptyOnMachineDeconstruct
+    containers:
+    - destructive-analyzer-container
   - type: ResearchClient
   - type: DestructiveAnalyzer
   - type: ActivatableUI
@@ -91,6 +94,9 @@
       machine_board: !type:Container
       machine_parts: !type:Container
       experimental-destructive-scanner-container: !type:Container
+  - type: EmptyOnMachineDeconstruct
+    containers:
+    - experimental-destructive-scanner-container
   - type: ResearchClient
   - type: ExperimentalDestructiveScanner
   - type: ActivatableUI

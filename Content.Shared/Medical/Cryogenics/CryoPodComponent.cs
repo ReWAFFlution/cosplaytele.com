@@ -86,9 +86,6 @@ public sealed partial class CryoPodComponent : Component
 
     [DataField]
     public float CoolingEfficiency = 1f;
-
-    [DataField]
-    public float BaseCoolingEfficiency = 1f;
     // Arcane-End
 
     /// <summary>

@@ -56,7 +56,7 @@ public sealed partial class ExperiScannerSystem : EntitySystem
 
         args.Handled = true;
 
-        if (!TryResolveServer(ent.Owner, out var server))
+        if (!_research.TryResolveMachineServer(ent.Owner, out var server))
         {
             Fail(ent, args.User, "research-experi-scanner-no-server");
             return;
@@ -114,7 +114,8 @@ public sealed partial class ExperiScannerSystem : EntitySystem
         string? serverName = null;
         var experiments = new List<ResearchMachineExperimentUiData>();
 
-        if (_research.TryGetClientServer(ent.Owner, out var serverUid, out var server) &&
+        if (_research.TryResolveMachineServer(ent.Owner, out var serverUid) &&
+            TryComp<ResearchServerComponent>(serverUid, out var server) &&
             TryComp<TechnologyDatabaseComponent>(serverUid, out var db))
         {
             serverName = server.ServerName;
@@ -132,23 +133,5 @@ public sealed partial class ExperiScannerSystem : EntitySystem
         }
 
         _ui.SetUiState(ent.Owner, ExperiScannerUiKey.Key, new ExperiScannerBoundInterfaceState(serverName, experiments, ent.Comp.LastResult));
-    }
-
-    private bool TryResolveServer(EntityUid uid, out EntityUid server)
-    {
-        server = EntityUid.Invalid;
-
-        if (TryComp<ResearchClientComponent>(uid, out var client) && client.Server is { } selected)
-        {
-            server = selected;
-            return true;
-        }
-
-        var fallback = _research.GetServers(uid).OrderBy(s => s.Comp.Id).FirstOrDefault();
-        if (fallback.Owner == EntityUid.Invalid)
-            return false;
-
-        server = fallback.Owner;
-        return true;
     }
 }

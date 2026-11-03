@@ -60,6 +60,8 @@ public sealed partial class ResearchSystem
             return;
         }
 
+        CanServerUnlockTechnology(uid, technologyPrototype, out var paidCosts); // Arcane: the price after discounts, before they change
+
         if (!UnlockTechnology(uid, args.Id, act))
         // Arcane-Edit-Start
         {
@@ -70,7 +72,7 @@ public sealed partial class ResearchSystem
 
         if (!_emag.CheckFlag(uid, EmagType.Interaction) && technologyPrototype.AnnounceOnUnlock) // Arcane-Edit
         {
-            var costText = FormatResearchPointAmounts(technologyPrototype.PointCosts); // Arcane
+            var costText = FormatResearchPointAmounts(paidCosts); // Arcane
             var message = Loc.GetString(
                 "research-console-unlock-technology-radio-broadcast",
                 ("technology", Loc.GetString(technologyPrototype.Name)),
@@ -90,8 +92,7 @@ public sealed partial class ResearchSystem
             SayTechnologyUnlocked(uid, technologyPrototype, costText, _identity.GetIdentityShortInfo(act, uid) ?? string.Empty); // Arcane
         }
 
-        SyncClientWithServer(uid);
-        UpdateConsoleInterface(uid, component);
+        SyncClientWithServer(uid); // Arcane-Edit: the sync's event updates the interface, no direct update
     }
 
     private void OnConsoleBeforeUiOpened(EntityUid uid, ResearchConsoleComponent component, BeforeActivatableUIOpenEvent args)
@@ -258,7 +259,11 @@ public sealed partial class ResearchSystem
     private void OnConsoleRegistrationChanged(EntityUid uid, ResearchConsoleComponent component, ref ResearchRegistrationChangedEvent args)
     {
         SyncClientWithServer(uid);
-        UpdateConsoleInterface(uid, component);
+
+        // Arcane-Edit-Start: with a server the sync's event updates the interface
+        if (CompOrNull<ResearchClientComponent>(uid)?.Server == null)
+            UpdateConsoleInterface(uid, component);
+        // Arcane-Edit-End
     }
 
     private void OnConsoleDatabaseModified(EntityUid uid, ResearchConsoleComponent component, ref TechnologyDatabaseModifiedEvent args)

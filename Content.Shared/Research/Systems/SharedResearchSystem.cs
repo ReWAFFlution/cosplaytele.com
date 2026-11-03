@@ -82,6 +82,7 @@ public abstract partial class SharedResearchSystem : EntitySystem
             return;
 
         EnsureResearchedTechnologySet(component);
+        RevealPassiveTechnologies(component);
 
         var visible = new HashSet<ProtoId<TechnologyPrototype>>();
         var available = new HashSet<ProtoId<TechnologyPrototype>>();
@@ -90,12 +91,6 @@ public abstract partial class SharedResearchSystem : EntitySystem
         {
             if (!component.SupportedDisciplines.Contains(tech.Discipline))
                 continue;
-
-            if (tech.Hidden && !component.RevealedTechnologies.Contains(tech.ID) &&
-                ArePassiveRevealRequirementsSatisfied(component, tech))
-            {
-                component.RevealedTechnologies.Add(tech.ID);
-            }
 
             var researched = component.ResearchedTechnologies.Contains(tech.ID);
             var prereqsMet = tech.AllRequiredTechnologies.All(prereq => component.ResearchedTechnologies.Contains(prereq));
@@ -348,6 +343,28 @@ public abstract partial class SharedResearchSystem : EntitySystem
             : ResearchTechnologyVisibilityState.RevealedLocked;
     }
 
+    /// <summary>
+    /// Reveals hidden technologies whose requirements follow from the database alone. Repeated until nothing changes,
+    /// since a reveal can satisfy another technology's revealed requirement, whatever order they are listed in.
+    /// </summary>
+    private void RevealPassiveTechnologies(TechnologyDatabaseComponent component)
+    {
+        var changed = true;
+        while (changed)
+        {
+            changed = false;
+            foreach (var tech in ProtoMan.EnumeratePrototypes<TechnologyPrototype>())
+            {
+                if (!tech.Hidden || !component.SupportedDisciplines.Contains(tech.Discipline) ||
+                    component.RevealedTechnologies.Contains(tech.ID) || !ArePassiveRevealRequirementsSatisfied(component, tech))
+                    continue;
+
+                component.RevealedTechnologies.Add(tech.ID);
+                changed = true;
+            }
+        }
+    }
+
     private static bool ArePassiveRevealRequirementsSatisfied(TechnologyDatabaseComponent component, TechnologyPrototype tech)
     {
         if (tech.RevealRequirements.Count == 0)
@@ -355,21 +372,35 @@ public abstract partial class SharedResearchSystem : EntitySystem
 
         foreach (var requirement in tech.RevealRequirements)
         {
-            switch (requirement)
-            {
-                case ResearchedTechnologyRevealRequirement researchedRequirement
-                    when component.ResearchedTechnologies.Contains(researchedRequirement.Technology):
-
-                case CompletedExperimentRevealRequirement completedRequirement
-                    when component.CompletedExperiments.Contains(completedRequirement.Experiment):
-                    continue;
-
-                default:
-                    return false;
-            }
+            if (!TryGetPassiveRevealState(component, requirement, out var satisfied) || !satisfied)
+                return false;
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// The state of a reveal requirement that follows from the database alone. False for requirements fed by
+    /// discovery events, which keep their own progress.
+    /// </summary>
+    protected static bool TryGetPassiveRevealState(TechnologyDatabaseComponent component, TechnologyRevealRequirement requirement, out bool satisfied)
+    {
+        switch (requirement)
+        {
+            case RevealedTechnologyRevealRequirement revealed:
+                satisfied = component.RevealedTechnologies.Contains(revealed.Technology) ||
+                            component.ResearchedTechnologies.Contains(revealed.Technology);
+                return true;
+            case ResearchedTechnologyRevealRequirement researched:
+                satisfied = component.ResearchedTechnologies.Contains(researched.Technology);
+                return true;
+            case CompletedExperimentRevealRequirement completed:
+                satisfied = component.CompletedExperiments.Contains(completed.Experiment);
+                return true;
+            default:
+                satisfied = false;
+                return false;
+        }
     }
     // Arcane-End
 
@@ -526,6 +557,32 @@ public abstract partial class SharedResearchSystem : EntitySystem
         RaiseLocalEvent(uid, ref ev);
     }
 
+    // Arcane-Start
+    /// <summary>
+    /// The server that really owns the database of this server's research network.
+    /// </summary>
+    public virtual EntityUid GetEffectiveServer(EntityUid server)
+    {
+        return server;
+    }
+
+    /// <summary>
+    /// Researched technologies that can really be removed: starting technologies of supported disciplines
+    /// are the database's baseline and come back with every recalculation.
+    /// </summary>
+    public List<ProtoId<TechnologyPrototype>> GetRemovableTechnologies(TechnologyDatabaseComponent component)
+    {
+        return component.ResearchedTechnologies
+            .Where(id => ProtoMan.TryIndex(id, out var tech) && CanRemoveTechnology(component, tech))
+            .ToList();
+    }
+
+    private static bool CanRemoveTechnology(TechnologyDatabaseComponent component, TechnologyPrototype tech)
+    {
+        return !tech.StartingTechnology || !component.SupportedDisciplines.Contains(tech.Discipline);
+    }
+    // Arcane-End
+
     /// <summary>
     /// Removes a technology and its recipes from a technology database.
     /// </summary>
@@ -540,6 +597,9 @@ public abstract partial class SharedResearchSystem : EntitySystem
     [PublicAPI]
     public bool TryRemoveTechnology(Entity<TechnologyDatabaseComponent> entity, TechnologyPrototype tech)
     {
+        if (!CanRemoveTechnology(entity.Comp, tech)) // Arcane
+            return false;
+
         if (!entity.Comp.ResearchedTechnologies.Remove(tech.ID)) // Arcane-Edit
             return false;
 

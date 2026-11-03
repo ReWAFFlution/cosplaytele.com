@@ -56,6 +56,33 @@ public sealed partial class ResearchSystem
         return imported;
     }
 
+    /// <inheritdoc/>
+    public override EntityUid GetEffectiveServer(EntityUid server)
+    {
+        return GetNetworkAuthority(server);
+    }
+
+    /// <summary>
+    /// The server a research machine works with: its selected one or, deselected, the first on its grid, resolved to
+    /// the network's authority, so progress, points and what the machine shows all belong to one database.
+    /// </summary>
+    public bool TryResolveMachineServer(EntityUid machine, out EntityUid server)
+    {
+        server = EntityUid.Invalid;
+        if (TryComp<ResearchClientComponent>(machine, out var client) && client.Server is { } selected)
+        {
+            server = GetNetworkAuthority(selected);
+            return true;
+        }
+
+        var fallback = GetServers(machine).OrderBy(s => s.Comp.Id).FirstOrDefault();
+        if (fallback.Owner == EntityUid.Invalid)
+            return false;
+
+        server = GetNetworkAuthority(fallback.Owner);
+        return true;
+    }
+
     /// <summary>
     /// The server whose database a research network actually uses: clients and points go to it, so snapshots
     /// are read from and written to it too.

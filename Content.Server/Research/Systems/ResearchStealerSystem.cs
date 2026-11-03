@@ -28,12 +28,13 @@ public sealed partial class ResearchStealerSystem : SharedResearchStealerSystem
 
         var ev = new ResearchStolenEvent(uid, target, new());
         var count = _random.Next(comp.MinToSteal, comp.MaxToSteal + 1);
+        var removable = _research.GetRemovableTechnologies(database); // Arcane
         for (var i = 0; i < count; i++)
         {
-            if (database.ResearchedTechnologies.Count == 0) // Arcane-Edit
+            if (removable.Count == 0) // Arcane-Edit
                 break;
 
-            var toRemove = _random.Pick(database.ResearchedTechnologies); // Arcane-Edit
+            var toRemove = _random.PickAndTake(removable); // Arcane-Edit
             if (_research.TryRemoveTechnology((target, database), toRemove))
                 ev.Techs.Add(toRemove);
         }

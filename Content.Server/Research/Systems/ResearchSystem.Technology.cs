@@ -203,15 +203,7 @@ public sealed partial class ResearchSystem
     /// <returns>Whether it could be unlocked or not</returns>
     private bool CanServerUnlockTechnology(EntityUid uid, TechnologyPrototype technology, out List<ResearchPointAmount> finalCosts, TechnologyDatabaseComponent? database = null, ResearchClientComponent? client = null) // Arcane-Edit: Was public
     {
-        // Arcane-Start
-        finalCosts = technology.PointCosts
-            .Select(cost => new ResearchPointAmount
-            {
-                Type = cost.Type,
-                Amount = cost.Amount,
-            })
-            .ToList();
-        // Arcane-End
+        finalCosts = new List<ResearchPointAmount>(); // Arcane
 
         if (!Resolve(uid, ref client, ref database, false))
             return false;
@@ -223,19 +215,10 @@ public sealed partial class ResearchSystem
         if (!TryComp<TechnologyDatabaseComponent>(serverUid, out var serverDatabase))
             return false;
 
+        finalCosts = GetTechnologyFinalPointCosts(serverDatabase, technology);
+
         if (!CanUnlockTechnology(serverDatabase, technology))
             return false;
-
-        for (var i = 0; i < finalCosts.Count; i++)
-        {
-            if (finalCosts[i].Type != "General")
-                continue;
-
-            var updated = finalCosts[i];
-            updated.Amount = GetTechnologyFinalCost(serverDatabase, technology);
-            finalCosts[i] = updated;
-            break;
-        }
 
         return HasSufficientPoints(serverUid.Value, finalCosts, serverComp);
         // Arcane-End

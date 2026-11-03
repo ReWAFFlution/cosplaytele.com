@@ -44,8 +44,6 @@ public sealed partial class ExperimentalDestructiveScannerSystem : EntitySystem
     {
         _container.EnsureContainer<Container>(ent, ent.Comp.ContainerId);
 
-        ent.Comp.BaseScanDuration = ent.Comp.ScanDuration;
-
         UpdateAppearance(ent, ExperimentalDestructiveScannerVisualState.Idle);
     }
 
@@ -80,7 +78,7 @@ public sealed partial class ExperimentalDestructiveScannerSystem : EntitySystem
             return;
         }
 
-        if (!TryResolveServer(ent, out var server))
+        if (!_research.TryResolveMachineServer(ent, out var server))
         {
             ent.Comp.LastSubject = string.Empty;
             ent.Comp.LastResult = Loc.GetString("research-machine-common-no-server");
@@ -229,24 +227,6 @@ public sealed partial class ExperimentalDestructiveScannerSystem : EntitySystem
             : experimentId;
     }
 
-    private bool TryResolveServer(Entity<ExperimentalDestructiveScannerComponent> ent, out EntityUid server)
-    {
-        server = EntityUid.Invalid;
-
-        if (TryComp<ResearchClientComponent>(ent, out var client) && client.Server is { } selected)
-        {
-            server = selected;
-            return true;
-        }
-
-        var fallback = _research.GetServers(ent).OrderBy(s => s.Comp.Id).FirstOrDefault();
-        if (fallback.Owner == EntityUid.Invalid)
-            return false;
-
-        server = fallback.Owner;
-        return true;
-    }
-
     private void UpdateAppearance(Entity<ExperimentalDestructiveScannerComponent> ent, ExperimentalDestructiveScannerVisualState state)
     {
         _appearance.SetData(ent.Owner, ExperimentalDestructiveScannerVisuals.State, state);
@@ -258,7 +238,8 @@ public sealed partial class ExperimentalDestructiveScannerSystem : EntitySystem
         var pointBalances = new List<ResearchPointAmount>();
         var experiments = new List<ResearchMachineExperimentUiData>();
 
-        if (_research.TryGetClientServer(ent.Owner, out var serverUid, out var server))
+        if (_research.TryResolveMachineServer(ent.Owner, out var serverUid) &&
+            TryComp<ResearchServerComponent>(serverUid, out var server))
         {
             serverName = server.ServerName;
             pointBalances = server.PointBalances.ToList();
@@ -296,17 +277,19 @@ public sealed partial class ExperimentalDestructiveScannerSystem : EntitySystem
 
     private void OnPartsRefresh(EntityUid uid, ExperimentalDestructiveScannerComponent component, RefreshPartsEvent args)
     {
+        component.BaseScanDuration ??= component.ScanDuration;
+
         var servoTier = args.GetPartRating(component.ServoPart);
-        component.ScanDuration = TimeSpan.FromSeconds(MathF.Max(0.5f, (float)component.BaseScanDuration.TotalSeconds / MathF.Max(servoTier, 1f)));
+        component.ScanDuration = TimeSpan.FromSeconds(MathF.Max(0.5f, (float)component.BaseScanDuration.Value.TotalSeconds / MathF.Max(servoTier, 1f)));
 
         UpdateUi((uid, component));
     }
 
     private static void OnUpgradeExamine(EntityUid uid, ExperimentalDestructiveScannerComponent component, UpgradeExamineEvent args)
     {
-        var cooldownMultiplier = component.ScanDuration.TotalSeconds <= 0
+        var cooldownMultiplier = component.ScanDuration.TotalSeconds <= 0 || component.BaseScanDuration is not { } baseDuration
             ? 1f
-            : (float)(component.BaseScanDuration.TotalSeconds / component.ScanDuration.TotalSeconds);
+            : (float)(baseDuration.TotalSeconds / component.ScanDuration.TotalSeconds);
 
         args.AddPercentageUpgrade("machine-upgrade-research-cooldown", cooldownMultiplier);
     }

@@ -14,8 +14,11 @@ public sealed partial class ExperimentalDestructiveScannerComponent : Component
     [DataField]
     public TimeSpan ScanDuration = TimeSpan.FromSeconds(3.5f);
 
+    /// <summary>
+    /// Scan duration without parts, taken at the first parts refresh before any upgrade applies.
+    /// </summary>
     [DataField]
-    public TimeSpan BaseScanDuration = TimeSpan.FromSeconds(3.5f);
+    public TimeSpan? BaseScanDuration;
 
     [DataField]
     public TimeSpan CapsuleStepDuration = TimeSpan.FromSeconds(1.15f);

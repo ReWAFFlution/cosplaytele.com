@@ -128,14 +128,20 @@ public sealed partial class TechnologyDiskSystem : EntitySystem
         if (args.Handled || !args.CanReach || args.Target is not { } target)
             return;
 
-        if (!HasComp<ResearchServerComponent>(target) || !TryComp<TechnologyDatabaseComponent>(target, out var database))
+        if (!HasComp<ResearchServerComponent>(target)) // Arcane-Edit: database check moved to the effective server
             return;
+
+        // Arcane-Start: machines of a research network use its main server, so the recipes go there
+        var effective = _research.GetEffectiveServer(target);
+        if (!TryComp<TechnologyDatabaseComponent>(effective, out var database))
+            return;
+        // Arcane-End
 
         if (ent.Comp.Recipes != null)
         {
             foreach (var recipe in ent.Comp.Recipes)
             {
-                _research.AddLatheRecipe(target, recipe, database);
+                _research.AddLatheRecipe(effective, recipe, database); // Arcane-Edit: target > effective
             }
         }
         _popup.PopupEntity(Loc.GetString("tech-disk-inserted"), target, args.User);

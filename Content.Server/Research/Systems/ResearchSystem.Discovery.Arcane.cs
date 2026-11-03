@@ -149,13 +149,9 @@ public sealed partial class ResearchSystem
         string technologyId,
         TechnologyRevealRequirement requirement)
     {
-        return requirement switch
-        {
-            RevealedTechnologyRevealRequirement revealed => database.RevealedTechnologies.Contains(revealed.Technology) || database.ResearchedTechnologies.Contains(revealed.Technology),
-            ResearchedTechnologyRevealRequirement researched => database.ResearchedTechnologies.Contains(researched.Technology),
-            CompletedExperimentRevealRequirement completed => database.CompletedExperiments.Contains(completed.Experiment),
-            _ => GetDiscoveryProgress(database, technologyId, requirement.Id) >= Math.Max(1, requirement.Target)
-        };
+        return TryGetPassiveRevealState(database, requirement, out var satisfied)
+            ? satisfied
+            : GetDiscoveryProgress(database, technologyId, requirement.Id) >= Math.Max(1, requirement.Target);
     }
 
     private bool DoesDiscoveryEventMatch(TechnologyRevealRequirement requirement, DiscoveryEventData data)
