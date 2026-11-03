@@ -136,13 +136,15 @@ public sealed partial class BitrunningObjectiveSystem : EntitySystem
             return;
         }
 
-        if (!_byteforge.TryDeliverObjectiveCargoToByteforge(serverUid, args.OtherEntity))
+        // Checked before the progress is added: the last delivery can stop the domain the crate takes its loot from.
+        var points = server.ObjectiveType == BitrunningObjectiveType.DeliveryCacheCrate ? ent.Comp.Points : 0;
+        if (!_byteforge.TryDeliverObjectiveCargoToByteforge(serverUid, args.OtherEntity, _server.IsObjectiveDoneWith(server, points)))
             return;
 
         _sparks.DoSparks(Transform(ent).Coordinates);
 
         if (server.ObjectiveType == BitrunningObjectiveType.DeliveryCacheCrate)
-            _server.AddObjectiveProgress(serverUid, ent.Comp.Points);
+            _server.AddObjectiveProgress(serverUid, points);
     }
 
     private void OnEnemyObjectiveStartup(Entity<BitrunningDomainEnemyObjectiveComponent> ent, ref ComponentStartup args)

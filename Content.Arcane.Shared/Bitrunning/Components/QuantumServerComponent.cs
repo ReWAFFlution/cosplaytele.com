@@ -100,6 +100,11 @@ public sealed partial class QuantumServerComponent : Component
 
     public bool ObjectiveCompleted;
 
+    /// <summary>
+    /// Whether this run already delivered the domain's fixed completion loot.
+    /// </summary>
+    public bool CompletionLootDelivered;
+
     public BitrunningObjectiveType ObjectiveType = BitrunningObjectiveType.None;
 
     public bool AllowDiskModifications = true;

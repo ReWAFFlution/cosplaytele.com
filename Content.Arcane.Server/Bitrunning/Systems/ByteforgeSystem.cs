@@ -130,7 +130,7 @@ public sealed partial class ByteforgeSystem : EntitySystem
         return TryComp<ByteforgeComponent>(byteforgeUid, out var byteforge) && byteforge.LinkedServer == serverUid;
     }
 
-    public bool TryDeliverObjectiveCargoToByteforge(EntityUid serverUid, EntityUid cargoUid)
+    public bool TryDeliverObjectiveCargoToByteforge(EntityUid serverUid, EntityUid cargoUid, bool objectiveDone)
     {
         if (!TryComp<QuantumServerComponent>(serverUid, out var server))
             return false;
@@ -160,6 +160,9 @@ public sealed partial class ByteforgeSystem : EntitySystem
             QueueDel(rewardCargoUid);
             return false;
         }
+
+        if (objectiveDone)
+            AddCompletionLoot(rewardCargoUid, server);
 
         EnsureComp<BitrunningDeliveredObjectiveCargoComponent>(cargoUid);
         PulseByteforge(byteforgeUid);
@@ -246,9 +249,7 @@ public sealed partial class ByteforgeSystem : EntitySystem
         {
             var loot = Spawn(prototypeId, coordinates);
 
-            if (TryComp<StorageComponent>(cargoUid, out var storage) &&
-                _storage.Insert(cargoUid, loot, out _, storageComp: storage, playSound: false) || TryComp<EntityStorageComponent>(cargoUid, out var entityStorage) &&
-                _entityStorage.Insert(loot, cargoUid, entityStorage))
+            if (TryInsertLoot(cargoUid, loot))
             {
                 insertedAny = true;
                 continue;
@@ -258,6 +259,34 @@ public sealed partial class ByteforgeSystem : EntitySystem
         }
 
         return insertedAny;
+    }
+
+    private bool TryInsertLoot(EntityUid cargoUid, EntityUid loot)
+    {
+        return TryComp<StorageComponent>(cargoUid, out var storage) &&
+               _storage.Insert(cargoUid, loot, out _, storageComp: storage, playSound: false) ||
+               TryComp<EntityStorageComponent>(cargoUid, out var entityStorage) &&
+               _entityStorage.Insert(loot, cargoUid, entityStorage);
+    }
+
+    /// <summary>
+    /// Fixed loot of the run's domain, once per run. It was earned, so what does not fit stays next to the crate.
+    /// </summary>
+    private void AddCompletionLoot(EntityUid crate, QuantumServerComponent server)
+    {
+        if (server.CompletionLootDelivered || server.CurrentDomain == null || !_domains.TryGetDomain(server.CurrentDomain, out var domain))
+            return;
+
+        server.CompletionLootDelivered = true;
+
+        var coordinates = Transform(crate).Coordinates;
+        foreach (var (prototype, amount) in domain.CompletionLoot)
+        {
+            for (var i = 0; i < amount; i++)
+            {
+                TryInsertLoot(crate, Spawn(prototype, coordinates));
+            }
+        }
     }
 
     private ProtoId<EntityTablePrototype> GetDifficultyLootTable(QuantumServerComponent server)

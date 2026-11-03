@@ -90,8 +90,6 @@
     Plasmaman: BitrunnerAvatarSecurityOfficerMODPlasmamanGear
     Vox: BitrunnerAvatarSecurityOfficerMODVoxGear
   isModular: true
-  completionLoot:
-    ClothingNeckFellForItAward: 1
   mapPath: /Maps/_Arcane/Bitrun/meta-central.yml
   objectiveTypePool:
   - DeliveryCacheCrate

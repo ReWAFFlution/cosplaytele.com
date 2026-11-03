@@ -222,6 +222,7 @@ public sealed partial class QuantumServerSystem : EntitySystem
         server.ObjectiveType = objectiveType;
         server.ObjectiveGoal = ResolveObjectiveGoal((serverUid, server), domain, objectiveType);
         server.ObjectiveCompleted = false;
+        server.CompletionLootDelivered = false;
         server.Points -= domain.Cost;
         server.CooldownEndTime = TimeSpan.Zero;
         server.AllowDiskModifications = domain.AllowDiskModifications;
@@ -451,6 +452,7 @@ public sealed partial class QuantumServerSystem : EntitySystem
         serverEnt.Comp.SpawnCoordinates = null;
         serverEnt.Comp.ObjectivePoints = 0;
         serverEnt.Comp.ObjectiveCompleted = false;
+        serverEnt.Comp.CompletionLootDelivered = false;
         serverEnt.Comp.GrantedItemDisks.Clear();
         serverEnt.Comp.AllowProfileLoad = true;
         serverEnt.Comp.WasRandomizedRun = false;
@@ -711,6 +713,17 @@ public sealed partial class QuantumServerSystem : EntitySystem
         }
 
         connection.Disconnecting = false;
+    }
+
+    /// <summary>
+    /// Whether the objective is done, or adding these points would finish it.
+    /// </summary>
+    public bool IsObjectiveDoneWith(QuantumServerComponent server, int points)
+    {
+        return server.ObjectiveCompleted
+               || server.State == BitrunningServerState.Running
+               && HasActiveObjective(server)
+               && server.ObjectivePoints + points >= server.ObjectiveGoal;
     }
 
     public void AddObjectiveProgress(EntityUid serverUid, int points)

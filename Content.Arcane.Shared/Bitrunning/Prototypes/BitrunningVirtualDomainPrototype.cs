@@ -164,9 +164,9 @@ public sealed partial class BitrunningVirtualDomainPrototype : IPrototype
     public Dictionary<ProtoId<SpeciesPrototype>, ProtoId<StartingGearPrototype>> ForcedLoadoutSpecie { get; private set; } = new();
 
     /// <summary>
-    /// Fixed domain completion loot to spawn in decrypted cache.
-    /// Key: entity prototype, Value: amount.
+    /// Fixed loot added once per run, on top of the difficulty table, to the first crate the byteforge delivers
+    /// once the objective is done. Key: entity prototype, Value: amount of separate entities.
     /// </summary>
     [DataField]
-    public Dictionary<string, int> CompletionLoot { get; private set; } = [];
+    public Dictionary<EntProtoId, int> CompletionLoot { get; private set; } = [];
 }
