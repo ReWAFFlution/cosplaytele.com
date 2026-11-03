@@ -32,13 +32,13 @@
     fuelLitCost: 2
   - type: RefillableSolution
     solution: plasma
-  - type: SolutionContainerManager
-    solutions:
-      plasma:
-        reagents:
-        - ReagentId: Plasma
-          Quantity: 250
-        maxVol: 250
+  - type: Solution
+    id: plasma
+    solution:
+      maxVol: 250
+      reagents:
+      - ReagentId: Plasma
+        Quantity: 250
   - type: SolutionRegeneration
     duration: 2
     generated:
@@ -94,10 +94,10 @@
     sprite: _Arcane/Objects/Weapons/Melee/plasma_sword_double.rsi
   - type: Item
     sprite: _Arcane/Objects/Weapons/Melee/plasma_sword_double-inhands.rsi
-  - type: SolutionContainerManager
-    solutions:
-      plasma:
-        reagents:
-        - ReagentId: Plasma
-          Quantity: 300
-        maxVol: 300
+  - type: Solution
+    id: plasma
+    solution:
+      maxVol: 300
+      reagents:
+      - ReagentId: Plasma
+        Quantity: 300
