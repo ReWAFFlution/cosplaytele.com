@@ -18,7 +18,7 @@ public sealed partial class HeadsetSystem
     private IEnumerable<Entity<HeadsetComponent>> GetWornHeadsets(EntityUid wearer)
     {
         var additional = new List<Entity<HeadsetComponent>>();
-        var enumerator = _inventory.GetSlotEnumerator(wearer, SlotFlags.WITHOUT_POCKET);
+        var enumerator = _inventory.GetSlotEnumerator(wearer);
         while (enumerator.NextItem(out var item, out var slot))
         {
             var slotFlags = slot.SlotFlags;
