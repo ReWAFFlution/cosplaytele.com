@@ -16,7 +16,7 @@ public sealed partial class GhostReturnToRoundSystem : EntitySystem
     [Dependency] private IUserInterfaceManager _ui = default!;
 
     private GhostGui? _hooked;
-    private string? _lastText;
+    private int? _lastShown;
 
     public override void FrameUpdate(float frameTime)
     {
@@ -28,7 +28,7 @@ public sealed partial class GhostReturnToRoundSystem : EntitySystem
         if (_hooked != gui)
         {
             _hooked = gui;
-            _lastText = null;
+            _lastShown = null;
             gui.ReturnToRoundButton.OnPressed += _ => RaiseNetworkEvent(new GhostReturnToRoundRequestEvent());
         }
 
@@ -40,16 +40,17 @@ public sealed partial class GhostReturnToRoundSystem : EntitySystem
 
         var left = respawn.RespawnAt - _timing.CurTime;
         var ready = left <= TimeSpan.Zero;
-        var text = ready
-            ? Loc.GetString("ghost-gui-return-to-round-ready-button")
-            : Loc.GetString("ghost-gui-return-to-round-button", ("time", $"{(int) left.TotalMinutes:00}:{left.Seconds:00}"));
 
+        // The label only changes with the shown second, so this runs before any formatting.
+        var shown = ready ? -1 : (int) left.TotalSeconds;
         gui.ReturnToRoundButton.Visible = true;
-        if (text == _lastText)
+        if (shown == _lastShown)
             return;
 
-        _lastText = text;
-        gui.ReturnToRoundButton.Text = text;
+        _lastShown = shown;
+        gui.ReturnToRoundButton.Text = ready
+            ? Loc.GetString("ghost-gui-return-to-round-ready-button")
+            : Loc.GetString("ghost-gui-return-to-round-button", ("time", $"{(int) left.TotalMinutes:00}:{left.Seconds:00}"));
         gui.ReturnToRoundButton.Disabled = !ready;
     }
 }
