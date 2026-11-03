@@ -1,4 +1,5 @@
 using Content.Arcane.Shared.PDA;
+using Content.Client.Clothing.Systems;
 using Content.Client.PDA;
 
 namespace Content.Arcane.Client.PDA;
@@ -21,14 +22,34 @@ public sealed partial class PdaSkinSystem : EntitySystem
 
         SubscribeLocalEvent<PdaScreenComponent, ComponentStartup>(OnStartup);
         SubscribeLocalEvent<PdaScreenComponent, AppearanceChangeEvent>(OnAppearanceChange, after: [typeof(PdaVisualizerSystem)]);
+        SubscribeLocalEvent<PdaScreenComponent, ChameleonSpriteUpdatedEvent>(OnChameleonSpriteUpdated);
     }
 
     private void OnStartup(Entity<PdaScreenComponent> ent, ref ComponentStartup args)
     {
-        if (!TryComp<SpriteComponent>(ent, out var sprite) || GetSkin(ent) is not { } skin)
+        if (MetaData(ent).EntityPrototype is { } proto)
+            ApplySkin(ent, proto);
+    }
+
+    /// <summary>
+    /// A disguise copies its whole sprite over this one, so the skin of the disguise goes on top again.
+    /// </summary>
+    private void OnChameleonSpriteUpdated(Entity<PdaScreenComponent> ent, ref ChameleonSpriteUpdatedEvent args)
+    {
+        ApplySkin(ent, args.Disguise);
+    }
+
+    private void ApplySkin(Entity<PdaScreenComponent> ent, EntityPrototype proto)
+    {
+        if (!TryComp<SpriteComponent>(ent, out var sprite) || GetSkin(proto) is not { } skin)
             return;
 
         var spriteEnt = (ent.Owner, sprite);
+
+        // Already skinned: the disguise had no sprite to copy over the layers.
+        if (_sprite.LayerMapTryGet(spriteEnt, PdaScreenLayers.Screen, out _, false))
+            return;
+
         if (!_sprite.LayerMapTryGet(spriteEnt, PdaVisualizerSystem.PdaVisualLayers.Base, out var baseIndex, false))
             return;
 
@@ -88,11 +109,8 @@ public sealed partial class PdaSkinSystem : EntitySystem
     /// <summary>
     /// The skin for this PDA's prototype or its closest parent.
     /// </summary>
-    private PdaSkinPrototype? GetSkin(EntityUid uid)
+    private PdaSkinPrototype? GetSkin(EntityPrototype proto)
     {
-        if (MetaData(uid).EntityPrototype is not { } proto)
-            return null;
-
         if (_proto.TryIndex<PdaSkinPrototype>(proto.ID, out var skin))
             return skin;
 
