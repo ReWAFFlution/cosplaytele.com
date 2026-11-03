@@ -25,6 +25,14 @@ public sealed class ChameleonStampUserInterface : BoundUserInterface
         _window.OpenCentered();
     }
 
+    public override void Update()
+    {
+        base.Update();
+
+        // The component is the state the server accepted, so this replaces the draft in the window.
+        _window?.UpdateVisuals();
+    }
+
     private void ApplyButton_OnButtonDown(Robust.Client.UserInterface.Controls.BaseButton.ButtonEventArgs obj)
     {
         if (_window is null)
@@ -37,28 +45,14 @@ public sealed class ChameleonStampUserInterface : BoundUserInterface
         var stampSpriteMeta = _window.StampSpriteOptionButton.GetItemMetadata(_window.StampSpriteOptionButton.SelectedId);
         var stampStateMeta = _window.StampStateOptionButton.GetItemMetadata(_window.StampStateOptionButton.SelectedId);
 
-        chameleonStamp.SelectedStampColorPrototype = stampColorMeta is not null ? (string) stampColorMeta : chameleonStamp.DefaultStampPrototype;
-        chameleonStamp.SelectedStampSpritePrototype = stampSpriteMeta is not null ? (string) stampSpriteMeta : chameleonStamp.DefaultStampPrototype;
-        chameleonStamp.SelectedStampStatePrototype = stampStateMeta is not null ? (string) stampStateMeta : chameleonStamp.DefaultStampPrototype;
-
-        chameleonStamp.CustomStampColor = _window.StampColorSelector.Color;
-
-        chameleonStamp.CustomName = _window.StampMetaDataName.Text == "" ? null : _window.StampMetaDataName.Text;
-        chameleonStamp.CustomDescription = _window.StampMetaDataDescription.Text == "" ? null : _window.StampMetaDataDescription.Text;
-        chameleonStamp.StampedName = _window.StampedNameLineEdit.Text == "" ? null : _window.StampedNameLineEdit.Text;
-
-        var selectedColor = chameleonStamp.CustomStampColor ?? _window.StampColorSelector.Color;
-
         SendMessage(new ChameleonStampApplySettingsMessage(
-            chameleonStamp.SelectedStampColorPrototype,
-            selectedColor,
-            chameleonStamp.CustomName,
-            chameleonStamp.CustomDescription,
-            chameleonStamp.StampedName,
-            chameleonStamp.SelectedStampSpritePrototype,
-            chameleonStamp.SelectedStampStatePrototype));
-
-        _window.UpdateVisuals();
+            stampColorMeta is not null ? (string) stampColorMeta : chameleonStamp.DefaultStampPrototype,
+            _window.StampColorSelector.Color,
+            _window.StampMetaDataName.Text == "" ? null : _window.StampMetaDataName.Text,
+            _window.StampMetaDataDescription.Text == "" ? null : _window.StampMetaDataDescription.Text,
+            _window.StampedNameLineEdit.Text == "" ? null : _window.StampedNameLineEdit.Text,
+            stampSpriteMeta is not null ? (string) stampSpriteMeta : chameleonStamp.DefaultStampPrototype,
+            stampStateMeta is not null ? (string) stampStateMeta : chameleonStamp.DefaultStampPrototype));
     }
 
     protected override void Dispose(bool disposing)

@@ -7,9 +7,6 @@ public sealed partial class ChameleonStampSystem : SharedChameleonStampSystem
 {
     [Dependency] private MetaDataSystem _metaData = default!;
 
-    private const int MaxNameLength = 64;
-    private const int MaxDescriptionLength = 256;
-
     public override void Initialize()
     {
         base.Initialize();
@@ -24,16 +21,14 @@ public sealed partial class ChameleonStampSystem : SharedChameleonStampSystem
         if (!TryComp<StampComponent>(entity, out var stamp))
             return;
 
-        _ = GetAllPresets();
-
-        if (!ValidatePreset(args.SelectedStampColorPrototype, out _, out var stampColorComponent))
+        if (!ValidatePreset(args.SelectedStampColorPrototype, out _, out var stampColorComponent)
+            || !ValidatePreset(args.SelectedStampStatePrototype, out _, out var stampStateComponent)
+            || !ValidatePreset(args.SelectedStampSpritePrototype, out var stampSpritePrototype, out var stampSpriteComponent))
+        {
+            // Nothing was applied: the resent state makes an open editor drop the rejected draft.
+            Dirty(entity);
             return;
-
-        if (!ValidatePreset(args.SelectedStampStatePrototype, out _, out var stampStateComponent))
-            return;
-
-        if (!ValidatePreset(args.SelectedStampSpritePrototype, out var stampSpritePrototype, out var stampSpriteComponent))
-            return;
+        }
 
         // Color
         entity.Comp.SelectedStampColorPrototype = args.SelectedStampColorPrototype;

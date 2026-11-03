@@ -6,9 +6,25 @@ namespace Content.Arcane.Shared.ChameleonStamp;
 
 public abstract partial class SharedChameleonStampSystem : EntitySystem
 {
+    public const int MaxNameLength = 64;
+    public const int MaxDescriptionLength = 256;
+
     [Dependency] protected IPrototypeManager Proto = default!;
 
     private List<ProtoId<EntityPrototype>> _stampsPresets = new();
+
+    public override void Initialize()
+    {
+        base.Initialize();
+
+        SubscribeLocalEvent<PrototypesReloadedEventArgs>(OnPrototypesReloaded);
+    }
+
+    private void OnPrototypesReloaded(PrototypesReloadedEventArgs args)
+    {
+        if (args.WasModified<EntityPrototype>())
+            UpdatePresets();
+    }
 
     protected void UpdatePresets()
     {

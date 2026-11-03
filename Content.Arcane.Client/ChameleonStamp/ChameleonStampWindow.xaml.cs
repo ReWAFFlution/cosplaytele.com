@@ -30,6 +30,10 @@ public sealed partial class ChameleonStampWindow : FancyWindow
         StampColorOptionButton.OnItemSelected += ColorOptionButton_OnItemSelected;
         StampSpriteOptionButton.OnItemSelected += StampSpriteOptionButton_OnItemSelected;
         StampStateOptionButton.OnItemSelected += StateOptionButton_OnItemSelected;
+
+        StampMetaDataName.IsValid = text => text.Length <= SharedChameleonStampSystem.MaxNameLength;
+        StampMetaDataDescription.IsValid = text => text.Length <= SharedChameleonStampSystem.MaxDescriptionLength;
+        StampedNameLineEdit.IsValid = text => text.Length <= SharedChameleonStampSystem.MaxNameLength;
     }
 
     public void UpdateVisuals()
@@ -80,8 +84,8 @@ public sealed partial class ChameleonStampWindow : FancyWindow
 
         _preview = _entMan.Spawn(chameleonStamp.SelectedStampSpritePrototype, MapCoordinates.Nullspace);
 
-        this.StampMetaDataName.PlaceHolder = Loc.GetString(stampSpritePrototype.Name);
-        this.StampMetaDataDescription.PlaceHolder = Loc.GetString(stampSpritePrototype.Description);
+        this.StampMetaDataName.PlaceHolder = stampSpritePrototype.Name;
+        this.StampMetaDataDescription.PlaceHolder = stampSpritePrototype.Description;
         this.StampedNameLineEdit.PlaceHolder = Loc.GetString(stampSpriteComponent.StampedName);
 
         // Player text, not locale ids.
@@ -124,8 +128,8 @@ public sealed partial class ChameleonStampWindow : FancyWindow
         if (!_chameleonStampSystem.ValidatePreset((string) meta, out var stampSpritePrototype, out var stampSpriteComponent))
             return;
 
-        this.StampMetaDataName.PlaceHolder = Loc.GetString(stampSpritePrototype.Name);
-        this.StampMetaDataDescription.PlaceHolder = Loc.GetString(stampSpritePrototype.Description);
+        this.StampMetaDataName.PlaceHolder = stampSpritePrototype.Name;
+        this.StampMetaDataDescription.PlaceHolder = stampSpritePrototype.Description;
         this.StampedNameLineEdit.PlaceHolder = Loc.GetString(stampSpriteComponent.StampedName);
     }
 
