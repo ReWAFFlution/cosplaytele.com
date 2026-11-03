@@ -220,7 +220,18 @@ public sealed partial class FlavorPreview : Control
     {
         // "https://docs.google.com.evil.example" and "https://docs.google.com@evil.example" start with an allowed
         // prefix but lead elsewhere, so the link is parsed and its host compared as a whole.
-        if (!Uri.TryCreate(link, UriKind.Absolute, out uri) || uri.Scheme != Uri.UriSchemeHttps || uri.UserInfo.Length > 0)
+        // The sandbox does not allow UriKind, so no Uri.TryCreate: the constructor only accepts absolute links.
+        try
+        {
+            uri = new Uri(link);
+        }
+        catch (Exception)
+        {
+            uri = null;
+            return false;
+        }
+
+        if (uri.Scheme != Uri.UriSchemeHttps || uri.UserInfo.Length > 0)
             return false;
 
         foreach (var allowed in AllowedLinks)
