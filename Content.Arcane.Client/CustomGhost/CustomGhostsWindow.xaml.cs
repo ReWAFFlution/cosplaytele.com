@@ -29,7 +29,7 @@ public sealed partial class CustomGhostsWindow : DefaultWindow
     private List<EntityUid> _previewEntities = new();
     private List<Control> _hidden = new();
     private Button? _currentActive;
-    private Dictionary<string, List<CustomGhostPrototype>> _allGhosts = new(); // won't include ghosts that are ckey-locked
+    private Dictionary<string, List<CustomGhostPrototype>> _allGhosts = new(); // every non-abstract ghost, AddButton decides which ones get a button
     private ProtoId<CustomGhostPrototype> _currentGhostProtoId;
 
     public CustomGhostsWindow()
@@ -67,8 +67,8 @@ public sealed partial class CustomGhostsWindow : DefaultWindow
             List<CustomGhostButton> buttons = new();
             foreach (var ghostProto in ghosts)
             {
-                if (AddButton(ghostProto) is { } button) // todo: consider moving AddChild from AddButton to here, to avoid this weird label juggling
-                    buttons.Add(button);                             // also do something about this stupid button visibility double checking
+                if (AddButton(ghostProto) is { } button)
+                    buttons.Add(button);
             }
 
             if (buttons.Count == 0)
@@ -85,7 +85,11 @@ public sealed partial class CustomGhostsWindow : DefaultWindow
         }
     }
 
-    private CustomGhostButton? AddButton(CustomGhostPrototype ghostProto) // is not guaranteed to actually add a button, lol
+    /// <summary>
+    /// Adds the ghost's button, hidden until "show all" for a ghost this player sees but cannot use yet.
+    /// Returns null without adding anything when this player must not see the ghost at all.
+    /// </summary>
+    private CustomGhostButton? AddButton(CustomGhostPrototype ghostProto)
     {
         var available = ghostProto.CanUse(_player.LocalSession!, out var fullFailReason, out var canSee);
         if (!canSee) // skip button creation altogether
