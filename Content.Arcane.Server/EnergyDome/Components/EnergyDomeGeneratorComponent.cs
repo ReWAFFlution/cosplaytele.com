@@ -14,8 +14,11 @@ namespace Content.Arcane.Server.EnergyDome;
 [RegisterComponent, Access(typeof(EnergyDomeSystem))] //Access add
 public sealed partial class EnergyDomeGeneratorComponent : Component
 {
-    [DataField]
-    public bool Enabled = false;
+    /// <summary>
+    /// Whether the dome is up right now; runtime state, set by turning the generator on and off.
+    /// </summary>
+    [ViewVariables]
+    public bool Enabled;
 
     /// <summary>
     /// How much energy will be spent from the battery per unit of damage taken by the shield.
