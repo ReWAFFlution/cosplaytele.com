@@ -739,7 +739,7 @@ public abstract partial class SharedMeleeWeaponSystem : EntitySystem
         var resistanceBypass = GetResistanceBypass(meleeUid, user, component);
         var entities = GetEntitySet(ev.Entities);
 
-        entities = entities.Where(e => !_tag.HasTag(e, MeleeHitIgnore)).ToList(); // Arcane
+        entities.RemoveWhere(e => _tag.HasTag(e, MeleeHitIgnore)); // Arcane
 
         if (entities.Count == 0)
         {
