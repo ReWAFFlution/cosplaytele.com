@@ -65,7 +65,7 @@ public sealed partial class EnergyReagentDispenserSystem : EntitySystem
     {
         if (ent.Comp.Beaker is not { } item ||
             !_solution.TryGetFitsInDispenser(item, out var solution, out var sol) ||
-            !ProtoMan.HasIndex(args.ReagentId) ||
+            !ent.Comp.Reagents.ContainsKey(args.ReagentId) || // Arcane-Edit: HasIndex > the machine's own list, other reagents would cost nothing
             !_batteryQuery.TryComp(ent, out var battery))
             return;
 
