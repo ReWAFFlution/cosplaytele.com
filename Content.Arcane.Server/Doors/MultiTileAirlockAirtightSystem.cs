@@ -19,7 +19,6 @@ public sealed partial class MultiTileAirlockAirtightSystem : EntitySystem
 
         SubscribeLocalEvent<MultiTileAirlockAirtightComponent, MapInitEvent>(OnMapInit);
         SubscribeLocalEvent<MultiTileAirlockAirtightComponent, AnchorStateChangedEvent>(OnAnchorChanged);
-        SubscribeLocalEvent<MultiTileAirlockAirtightComponent, ReAnchorEvent>(OnReAnchor);
         SubscribeLocalEvent<MultiTileAirlockAirtightComponent, AirtightChanged>(OnAirtightChanged);
         SubscribeLocalEvent<MultiTileAirlockAirtightComponent, ComponentShutdown>(OnShutdown);
     }
@@ -30,11 +29,6 @@ public sealed partial class MultiTileAirlockAirtightSystem : EntitySystem
     }
 
     private void OnAnchorChanged(Entity<MultiTileAirlockAirtightComponent> ent, ref AnchorStateChangedEvent args)
-    {
-        Respawn(ent);
-    }
-
-    private void OnReAnchor(Entity<MultiTileAirlockAirtightComponent> ent, ref ReAnchorEvent args)
     {
         Respawn(ent);
     }
