@@ -101,10 +101,6 @@
         emote: Cough
         showInGuidebook: true
         probability: 0.05
-      # Arcane-Start
-      - !type:ChemAddMoodlet
-        moodPrototype: PepperEffect
-      # Arcane-End
   reactiveEffects:
     Acidic:
       methods: [ Touch ]
@@ -168,11 +164,6 @@
     Digestion:
       metabolites:
         Nutriment: 1.5
-      # Arcane-Start
-      effects:
-      - !type:ChemAddMoodlet
-        moodPrototype: OilyEffect
-      # Arcane-End
 
 - type: reagent
   id: Oil
@@ -186,13 +177,6 @@
   color: "#b67823"
   boilingPoint: 300.0
   meltingPoint: -16.0
-  # Arcane-Start
-  metabolisms:
-    Digestion:
-      effects:
-      - !type:ChemAddMoodlet
-        moodPrototype: DeepFriedEffect
-  # Arcane-End
   tileReactions:
   - !type:FlammableTileReaction {}
 
@@ -227,10 +211,6 @@
         type: Local
         messages: [ "capsaicin-effect-light-burn" ]
         probability: 0.2
-      # Arcane-Start
-      - !type:ChemAddMoodlet
-        moodPrototype: SpicyEffect
-      # Arcane-End
 
 - type: reagent
   id: CocoaPowder #Candy and chocolate
@@ -251,10 +231,6 @@
           reagent: Nutriment
           min: 0.1
         factor: 1
-      # Arcane-Start
-      - !type:ChemAddMoodlet
-        moodPrototype: ChocolateEffect
-      # Arcane-End
   plantMetabolism:
   - !type:PlantAdjustNutrition
     amount: 0.1
@@ -278,11 +254,6 @@
     Digestion:
       metabolites:
         Nutriment: 1.5
-      # Arcane-Start
-      effects:
-      - !type:ChemAddMoodlet
-        moodPrototype: ButterEffect
-      # Arcane-End
 
 - type: reagent
   id: TeaPowder
@@ -328,7 +299,3 @@
         type: Local
         messages: [ "frost-oil-effect-light-cold" ]
         probability: 0.2
-      # Arcane-Start
-      - !type:ChemAddMoodlet
-        moodPrototype: MintyEffect
-      # Arcane-End

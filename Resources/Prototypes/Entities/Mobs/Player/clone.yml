@@ -11,12 +11,6 @@
   - Pacified
   - Paracusia
   - LightweightDrunk
-  # Arcane-Start
-  - MoodTrait
-  - Manic
-  - Mercurial
-  - DeadEmotions
-  # Arcane-End
 
 # Traits that root in physical things in your body.
 - type: cloningSettings
